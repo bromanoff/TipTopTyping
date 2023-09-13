@@ -87,6 +87,12 @@ def char_written(hand, target):
         return False
     else:
         return True
+
+def vector(t1, t2):
+    x = abs(t2[0] - t1[0])
+    y = abs(t2[1] - t1[1])
+    z = abs(t2[2] - t1[2])
+    return (x, y, z)
     
 while True:
     frame += 1
@@ -117,21 +123,29 @@ while True:
             
             height, width, _ = img.shape
             # FIXME: Fix thumb position towards tip of thumb
-            thumb_pos = (int(hand_landmarks.landmark[4].x * width), int(hand_landmarks.landmark[4].y * height), int(hand_landmarks.landmark[4].z * width))
+            # thumb_pos = (int(hand_landmarks.landmark[4].x * width), int(hand_landmarks.landmark[4].y * height))
+            thumb_pos = (hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height)
+            print("thumb y-pos: ", hand_landmarks.landmark[4].y * height, "thumb x-pos: ", hand_landmarks.landmark[4].x * width, "thumb-z-pos: ", hand_landmarks.landmark[4].z)
             # TODO: Create thumb vector from landmark 3 and 4
-            pinky_mcp_pos = (int(hand_landmarks.landmark[17].x * width), int(hand_landmarks.landmark[17].y * height))
+            # Example thumb position output:
+            # thumb y-pos:  483 thumb x-pos:  1691 thumb-z-pos:  -0.0047347149811685085
+            # thumb y-pos:  479 thumb x-pos:  1669 thumb-z-pos:  0.013186310417950153
+            thumb_tip_3d = [hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height, hand_landmarks.landmark[4].z]
+            thumb_ip_3d = [hand_landmarks.landmark[3].x * width, hand_landmarks.landmark[3].y * height, hand_landmarks.landmark[3].z]
+            thumb_vector = vector(thumb_ip_3d, thumb_tip_3d)
+            print("thumb tip 3d: ", thumb_tip_3d)
+            print("thumb ip 3d: ", thumb_ip_3d)
+            print("thumb vector: ", thumb_vector)
+            # TODO: get the vector caluclation right
             
-            # # Works only for camera facing perspective
-            # if distance(thumb_pos, pinky_mcp_pos) <= 40:
-            #     input_msg = []
-            #     # print("Input message cleared")
-            #     print(hand_label)
+            # packet = mp.packet_creator.create_int_vector([hand_landmarks.landmark[4].x, 2, 3]) 
+            # data = mp.packet_getter.get_int_vector(packet)
             
             # Reset input message when pinky tips touch
             if hand_label == "Left":
-                left_pinky_tip_pos = (int(hand_landmarks.landmark[20].x * width), int(hand_landmarks.landmark[20].y * height))
+                left_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
             if hand_label == "Right":
-                right_pinky_tip_pos = (int(hand_landmarks.landmark[20].x * width), int(hand_landmarks.landmark[20].y * height))
+                right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
             
             try: #exception handling for first iteration with uncomputed right pinky tip
                 if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 40:
@@ -141,14 +155,16 @@ while True:
                 continue
             
             # Thumb Annotations
-            cv2.circle(img, (thumb_pos), 5, (0, 255, 0), -1) # Draw Circles on thumb tips
+            cv2.circle(img, (int(thumb_pos[0]), int(thumb_pos[1])), 5, (0, 255, 0), -1) # Draw Circles on thumb tips
+            cv2.circle(img, (int(thumb_vector[0]), int(thumb_vector[1])), 5, (0, 0, 255), -1) # Draw Circles on elongatetd thumb vector
             # cv2.putText(img, hand_label, (thumb_x, thumb_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2) # print only handedness on thumb    
                         
             for idx, point in enumerate(hand_landmarks.landmark[8:21:4]):      # Calculate landmark positions for thumb and finger tips, except pinky [from:to:increment]
                 h, w, c = img.shape 
-                landmark_pos = (int(point.x * w), int(point.y * h))
+                # landmark_pos = (int(point.x * w), int(point.y * h))
+                landmark_pos = (point.x * w, point.y * h)
 
-                cv2.putText(img, CHAR_DICT[hand_label][idx][0], (landmark_pos), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+                cv2.putText(img, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
                 
                 # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
                 # TODO: OR: Only allow characters that are child nodes of chars in input_msg
