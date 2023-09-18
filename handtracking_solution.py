@@ -22,20 +22,8 @@ CHAR_DICT = {"Left": {
                 2: ["vbnm", False],
                 3: ["<-", False]}}
 
-# CHAR_DICT = {"Left": {
-#     			0: "qaz",
-#                 1: "wsx",
-#                 2: "edc",
-#                 3: "rfvtgb"},
-#        		"Right": {
-#              	0: "p",
-#                 1: "ol",
-#                 2: "ik",
-#                 3: "yhnujm"}}
-
-#write a list with 10 common known example words
-# LANGUAGE = ["hello", "world", "python", "is", "awesome", "language", "programming", "computer", "science", "data", "coverage", "hi"] 
 SPRACHE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world"]  
+test_phrase = "important news always seems to be late"
 
 # Trie Datastruture to store and query language
 trie = Trie()
@@ -49,7 +37,6 @@ handSolution = mp.solutions.hands
 hands = handSolution.Hands()
 
 input_msg = []
-string_permutations = []
 output_msg = ""
 
 def distance(pos1, pos2): #pos = (x, y)
@@ -61,14 +48,16 @@ def write_char(hand, target):
     global output_msg
     if not target == 3:
         input_msg.append(CHAR_DICT[hand][target][0])
+        CHAR_DICT[hand][target][1] = True
     else:
         match hand:
             case "Left":
                 output_msg += " "
+                CHAR_DICT[hand][target][1] = True
             case "Right":
                 output_msg = output_msg[:-1]
+                time.sleep(0.2)
         
-    CHAR_DICT[hand][target][1] = True
     print(f"Input Message: {input_msg}")
     
     # # print child nodes of current char in trie
@@ -89,15 +78,21 @@ def char_written(hand, target):
         return True
 
 def vector(t1, t2):
-    x = abs(t2[0] - t1[0])
-    y = abs(t2[1] - t1[1])
-    z = abs(t2[2] - t1[2])
+    x = t2[0] - t1[0]
+    y = t2[1] - t1[1]
+    z = t2[2] - t1[2]
     return (x, y, z)
+
+def print_phrase(phrase):
+    position = 0
+    for char in phrase:
+        cv2.putText(img, char, ((400 + position), 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
+        position += 30
+
     
 while True:
     frame += 1
     success, img = videoCap.read() #reading image
-    # img = cv2.flip(img, 1) #flip image for built in webcam
     # img = cv2.flip(img, 1) #flip image for built in webcam
     
     #fps calculations
@@ -122,24 +117,15 @@ while True:
             hand_label = handedness.classification[0].label   # get the hand label (left or right)
             
             height, width, _ = img.shape
-            # FIXME: Fix thumb position towards tip of thumb
-            # thumb_pos = (int(hand_landmarks.landmark[4].x * width), int(hand_landmarks.landmark[4].y * height))
             thumb_pos = (hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height)
-            print("thumb y-pos: ", hand_landmarks.landmark[4].y * height, "thumb x-pos: ", hand_landmarks.landmark[4].x * width, "thumb-z-pos: ", hand_landmarks.landmark[4].z)
-            # TODO: Create thumb vector from landmark 3 and 4
-            # Example thumb position output:
-            # thumb y-pos:  483 thumb x-pos:  1691 thumb-z-pos:  -0.0047347149811685085
-            # thumb y-pos:  479 thumb x-pos:  1669 thumb-z-pos:  0.013186310417950153
-            thumb_tip_3d = [hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height, hand_landmarks.landmark[4].z]
-            thumb_ip_3d = [hand_landmarks.landmark[3].x * width, hand_landmarks.landmark[3].y * height, hand_landmarks.landmark[3].z]
-            thumb_vector = vector(thumb_ip_3d, thumb_tip_3d)
-            print("thumb tip 3d: ", thumb_tip_3d)
-            print("thumb ip 3d: ", thumb_ip_3d)
-            print("thumb vector: ", thumb_vector)
-            # TODO: get the vector caluclation right
+            # print("thumb y-pos: ", hand_landmarks.landmark[4].y * height, "thumb x-pos: ", hand_landmarks.landmark[4].x * width, "thumb-z-pos: ", hand_landmarks.landmark[4].z)
             
-            # packet = mp.packet_creator.create_int_vector([hand_landmarks.landmark[4].x, 2, 3]) 
-            # data = mp.packet_getter.get_int_vector(packet)
+            # Calculate thumb top position
+            thumb_tip_3d = (hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height, hand_landmarks.landmark[4].z)
+            thumb_ip_3d = (hand_landmarks.landmark[3].x * width, hand_landmarks.landmark[3].y * height, hand_landmarks.landmark[3].z)
+            thumb_vector = vector(thumb_ip_3d, thumb_tip_3d)
+            thumb_vector = (thumb_vector[0] * 0.3, thumb_vector[1] * 0.3, thumb_vector[2] * 0.3) # scale vector
+            thumb_top = ((thumb_tip_3d[0] + thumb_vector[0]), (thumb_tip_3d[1] + thumb_vector[1]), (thumb_tip_3d[2] + thumb_vector[2]))
             
             # Reset input message when pinky tips touch
             if hand_label == "Left":
@@ -154,12 +140,15 @@ while True:
             except NameError:
                 continue
             
+            
             # Thumb Annotations
-            cv2.circle(img, (int(thumb_pos[0]), int(thumb_pos[1])), 5, (0, 255, 0), -1) # Draw Circles on thumb tips
-            cv2.circle(img, (int(thumb_vector[0]), int(thumb_vector[1])), 5, (0, 0, 255), -1) # Draw Circles on elongatetd thumb vector
-            # cv2.putText(img, hand_label, (thumb_x, thumb_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2) # print only handedness on thumb    
+            # cv2.circle(img, (int(thumb_pos[0]), int(thumb_pos[1])), 5, (0, 255, 0), -1) # Draw Circles on thumb tips
+            # cv2.putText(img, hand_label, (thumb_x, thumb_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2) # print only handedness on thumb
+            cv2.circle(img, (int(thumb_top[0]), int(thumb_top[1])), 5, (0, 0, 255), -1) # Draw Circles on elongatetd thumb top position
                         
-            for idx, point in enumerate(hand_landmarks.landmark[8:21:4]):      # Calculate landmark positions for thumb and finger tips, except pinky [from:to:increment]
+            
+            # Calculate landmark positions for thumb and finger tips, except pinky [from:to:increment]  
+            for idx, point in enumerate(hand_landmarks.landmark[8:21:4]):      
                 h, w, c = img.shape 
                 # landmark_pos = (int(point.x * w), int(point.y * h))
                 landmark_pos = (point.x * w, point.y * h)
@@ -168,21 +157,20 @@ while True:
                 
                 # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
                 # TODO: OR: Only allow characters that are child nodes of chars in input_msg
-                # if char in charset and distance <= 90:
-                # else …
-                # print("distance: ", distance(thumb_pos, landmark_pos))
-                # print("char written: ", char_written)
                 
-                if distance(thumb_pos, landmark_pos) <= 70 and not char_written(hand_label, idx):
+                if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
                     
-                elif distance(thumb_pos, landmark_pos) <= 70 and char_written:
+                elif distance(thumb_top, landmark_pos) <= 70 and char_written:
                     pass
                                     
-                elif distance(thumb_pos, landmark_pos) > 140 and char_written(hand_label, idx):
+                elif distance(thumb_top, landmark_pos) > 140 and char_written(hand_label, idx):
                     CHAR_DICT[hand_label][idx][1] = False
                     
     cv2.putText(img, output_msg, (500,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1)
+    
+    print_phrase(test_phrase)
 
 
     cv2.imshow("CamOutput", img)
