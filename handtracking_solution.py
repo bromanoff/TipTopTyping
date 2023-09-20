@@ -23,7 +23,14 @@ CHAR_DICT = {"Left": {
                 3: ["<-", False]}}
 
 SPRACHE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world"]  
-test_phrase = "important news always seems to be late"
+# test_phrase = "important news always seems to be late"
+# pull random phrase from phrases2.txt and save it in a variable
+with open("phrases2.txt", "r") as f:
+    phrases = f.readlines()
+    test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
+
+test_phrase = "haus maus"
+
 
 # Trie Datastruture to store and query language
 trie = Trie()
@@ -43,20 +50,57 @@ def distance(pos1, pos2): #pos = (x, y)
     Distance = int(math.sqrt(((pos2[0] - pos1[0]) * (pos2[0] - pos1[0])) + ((pos2[1] - pos1[1]) * (pos2[1] - pos1[1]))))
     return Distance
 
+# def write_char(hand, target):
+#     global input_msg
+#     global output_msg
+#     if not target == 3:
+#         input_msg.append(CHAR_DICT[hand][target][0])
+#         CHAR_DICT[hand][target][1] = True
+#     else:
+#         match hand:
+#             case "Left":
+#                 output_msg += " "
+#                 CHAR_DICT[hand][target][1] = True
+#             case "Right":
+#                 output_msg = output_msg[:-1]
+#                 time.sleep(0.2)
+
 def write_char(hand, target):
     global input_msg
     global output_msg
-    if not target == 3:
+    if not target == 3: #pinky
         input_msg.append(CHAR_DICT[hand][target][0])
         CHAR_DICT[hand][target][1] = True
+        for idx, char in enumerate(test_phrase):
+            print(f"idx: {idx}, char: {char}")
+            try:
+                # FIXME: colored letter only occurs for one frame
+                if char in input_msg[idx]:
+                    cv2.putText(img, test_phrase[:idx+1], (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
+                    print("MATCH")
+                    print(test_phrase[:idx+1])
+                else:
+                    cv2.putText(img, test_phrase[:idx+1], (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 2)
+                    print("NO MATCH")
+            except IndexError:
+                continue
     else:
         match hand:
             case "Left":
+                input_msg += " "
                 output_msg += " "
                 CHAR_DICT[hand][target][1] = True
             case "Right":
                 output_msg = output_msg[:-1]
                 time.sleep(0.2)
+    
+
+    # TODO: Build logic which turns chars in test-phrase green when they are in input_msg
+    '''
+    for i in input_msg:
+        for idx, c in enumerate(string):
+        
+    '''
         
     print(f"Input Message: {input_msg}")
     
@@ -94,6 +138,10 @@ while True:
     frame += 1
     success, img = videoCap.read() #reading image
     # img = cv2.flip(img, 1) #flip image for built in webcam
+    
+    # UI
+    cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1) #draw rectangle for text
+    # cv2.putText(img, test_phrase, (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2) #put test phrase on image
     
     #fps calculations
     thisFrameTime = time.time()
@@ -167,10 +215,12 @@ while True:
                 elif distance(thumb_top, landmark_pos) > 140 and char_written(hand_label, idx):
                     CHAR_DICT[hand_label][idx][1] = False
                     
-    cv2.putText(img, output_msg, (500,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1)
     
-    print_phrase(test_phrase)
+    
+    
+    
+    
+    # print_phrase(test_phrase)
 
 
     cv2.imshow("CamOutput", img)
