@@ -1,4 +1,5 @@
 import cv2
+from PIL import ImageFont, ImageDraw, Image  
 import mediapipe as mp
 import time
 import datetime
@@ -30,8 +31,10 @@ with open("phrases2.txt", "r") as f:
     test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
 
 test_phrase = "haus maus"
-
-
+phrase_chars = {}
+for idx, symbol in enumerate(test_phrase):
+    phrase_chars[idx] = [idx * 30, symbol, (0, 0, 0)]
+    
 # Trie Datastruture to store and query language
 trie = Trie()
 trie.extend(SPRACHE)
@@ -74,14 +77,11 @@ def write_char(hand, target):
         for idx, char in enumerate(test_phrase):
             print(f"idx: {idx}, char: {char}")
             try:
-                # FIXME: colored letter only occurs for one frame
+                # FIXME: color letter logic, faulty spcaebar, color reset when backspacing
                 if char in input_msg[idx]:
-                    cv2.putText(img, test_phrase[:idx+1], (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
-                    print("MATCH")
-                    print(test_phrase[:idx+1])
+                    phrase_chars[idx][2] = (0, 255, 0)
                 else:
-                    cv2.putText(img, test_phrase[:idx+1], (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 2)
-                    print("NO MATCH")
+                    phrase_chars[idx][2] = (255, 0, 0)
             except IndexError:
                 continue
     else:
@@ -95,13 +95,6 @@ def write_char(hand, target):
                 time.sleep(0.2)
     
 
-    # TODO: Build logic which turns chars in test-phrase green when they are in input_msg
-    '''
-    for i in input_msg:
-        for idx, c in enumerate(string):
-        
-    '''
-        
     print(f"Input Message: {input_msg}")
     
     # # print child nodes of current char in trie
@@ -142,6 +135,15 @@ while True:
     # UI
     cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1) #draw rectangle for text
     # cv2.putText(img, test_phrase, (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2) #put test phrase on image
+    
+    # PIL handover for text on image
+    cv2_img_rgb = cv2.cvtColor(img,cv2.COLOR_BGR2RGB) 
+    pil_img = Image.fromarray(cv2_img_rgb)  
+    draw = ImageDraw.Draw(pil_img)  
+    font = ImageFont.truetype("RobotoMono-Regular.ttf", 50) # use a truetype font 
+    for char in phrase_chars.values():
+        draw.text(((400 + char[0]), 890), char[1], font=font, fill=char[2]) # put text on image (FIXME: text is not centered)
+    cv2_img_processed = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR) 
     
     #fps calculations
     thisFrameTime = time.time()
@@ -185,6 +187,7 @@ while True:
                 if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 40:
                     input_msg = []
                     print("Input message cleared")
+                    # TODO: clear color from phrase_chars
             except NameError:
                 continue
             
@@ -214,14 +217,7 @@ while True:
                                     
                 elif distance(thumb_top, landmark_pos) > 140 and char_written(hand_label, idx):
                     CHAR_DICT[hand_label][idx][1] = False
-                    
-    
-    
-    
-    
-    
-    # print_phrase(test_phrase)
 
 
-    cv2.imshow("CamOutput", img)
+    cv2.imshow("CamOutput", cv2_img_processed)
     cv2.waitKey(1)       
