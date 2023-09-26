@@ -12,12 +12,12 @@ import math
 # TODO: Backspace, Return and Spacebar
 
 # Palm facing mental model 
-CHAR_DICT = {"Left": {
+CHAR_DICT = {"Right": {
     			0: ["qwert", False],
                 1: ["asdf", False],
                 2: ["zxc", False],
                 3: ["SPACE", False]},
-       		"Right": {
+       		"Left": {
              	0: ["yuiop", False],
                 1: ["ghjkl", False],
                 2: ["vbnm", False],
@@ -30,10 +30,10 @@ with open("phrases2.txt", "r") as f:
     phrases = f.readlines()
     test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
 
-test_phrase = "haus maus"
+# test_phrase = "haus maus"
 phrase_chars = {}
 for idx, symbol in enumerate(test_phrase):
-    phrase_chars[idx] = [idx * 30, symbol, (0, 0, 0)]
+    phrase_chars[idx] = [idx * 30, symbol, (105, 105, 105)]
     
 # Trie Datastruture to store and query language
 trie = Trie()
@@ -75,7 +75,7 @@ def write_char(hand, target):
         input_msg.append(CHAR_DICT[hand][target][0])
         CHAR_DICT[hand][target][1] = True
         for idx, char in enumerate(test_phrase):
-            print(f"idx: {idx}, char: {char}")
+            # print(f"idx: {idx}, char: {char}")
             try:
                 # FIXME: color letter logic, faulty spcaebar, color reset when backspacing
                 if char in input_msg[idx]:
@@ -86,14 +86,18 @@ def write_char(hand, target):
                 continue
     else:
         match hand:
-            case "Left":
+            case "Right":
                 input_msg += " "
                 output_msg += " "
                 CHAR_DICT[hand][target][1] = True
-            case "Right":
+            case "Left":
+                CHAR_DICT[hand][target][1] = True
+                try:
+                    phrase_chars[len(input_msg)-1][2] = (105, 105, 105) # turn deleted character gray again
+                except KeyError:
+                    pass
+                input_msg = input_msg[:-1]
                 output_msg = output_msg[:-1]
-                time.sleep(0.2)
-    
 
     print(f"Input Message: {input_msg}")
     
@@ -101,12 +105,13 @@ def write_char(hand, target):
     # for char in CHAR_DICT[hand_label][idx]:
     #     print(f"Tree children: {trie.children(char)}")
     
-    result = list(trie.complete(input_msg)) # get list of possible words
-    if len(result) == 1:    # if there is only one result, autocomplete
-        output_msg += result[0] + " "
-        print(output_msg)
-        input_msg = []
-    # time.sleep(0.1)
+    # # autocompletion
+    # result = list(trie.complete(input_msg)) # get list of possible words
+    # if len(result) == 1:    # if there is only one result, autocomplete
+    #     output_msg += result[0] + " "
+    #     print(output_msg)
+    #     input_msg = []
+    # # time.sleep(0.1)
 
 def char_written(hand, target):
     if CHAR_DICT[hand][target][1] == False:
@@ -120,12 +125,11 @@ def vector(t1, t2):
     z = t2[2] - t1[2]
     return (x, y, z)
 
-def print_phrase(phrase):
+def print_phrase(phrase): # for printing self written phrase on image
     position = 0
     for char in phrase:
-        cv2.putText(img, char, ((400 + position), 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
+        cv2.putText(cv2_img_processed, char, ((400 + position), 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
         position += 30
-
     
 while True:
     frame += 1
@@ -141,6 +145,7 @@ while True:
     pil_img = Image.fromarray(cv2_img_rgb)  
     draw = ImageDraw.Draw(pil_img)  
     font = ImageFont.truetype("RobotoMono-Regular.ttf", 50) # use a truetype font 
+    finger_font = ImageFont.truetype("AtkinsonHyperlegible-Regular.ttf", 30) # accessible font for finger annotations
     for char in phrase_chars.values():
         draw.text(((400 + char[0]), 890), char[1], font=font, fill=char[2]) # put text on image (FIXME: text is not centered)
     cv2_img_processed = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR) 
@@ -150,7 +155,7 @@ while True:
     fps = 1 / (thisFrameTime - lastFrameTime)
     lastFrameTime = thisFrameTime
     #write on image fps
-    cv2.putText(img, f'FPS:{int(fps)}',
+    cv2.putText(cv2_img_processed, f'FPS:{int(fps)}',
             (20, 70),
             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
@@ -184,10 +189,13 @@ while True:
                 right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
             
             try: #exception handling for first iteration with uncomputed right pinky tip
-                if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 40:
+                if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20:
                     input_msg = []
+                    for char in phrase_chars:
+                        phrase_chars[char][2] = (0, 0, 0)
+                    cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                    time.sleep(0.1)
                     print("Input message cleared")
-                    # TODO: clear color from phrase_chars
             except NameError:
                 continue
             
@@ -195,7 +203,7 @@ while True:
             # Thumb Annotations
             # cv2.circle(img, (int(thumb_pos[0]), int(thumb_pos[1])), 5, (0, 255, 0), -1) # Draw Circles on thumb tips
             # cv2.putText(img, hand_label, (thumb_x, thumb_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2) # print only handedness on thumb
-            cv2.circle(img, (int(thumb_top[0]), int(thumb_top[1])), 5, (0, 0, 255), -1) # Draw Circles on elongatetd thumb top position
+            cv2.circle(cv2_img_processed, (int(thumb_top[0]), int(thumb_top[1])), 5, (0, 0, 255), -1) # Draw Circles on elongatetd thumb top position
                         
             
             # Calculate landmark positions for thumb and finger tips, except pinky [from:to:increment]  
@@ -204,13 +212,41 @@ while True:
                 # landmark_pos = (int(point.x * w), int(point.y * h))
                 landmark_pos = (point.x * w, point.y * h)
 
-                cv2.putText(img, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+                # TODO: change font of finger annotations
+                # draw.text((int(landmark_pos[0]), int(landmark_pos[1])), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
+                cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 255), 2)
+                
                 
                 # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
                 # TODO: OR: Only allow characters that are child nodes of chars in input_msg
                 
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
+                    if len(input_msg) == len(test_phrase): # if input message is as long as test phrase, check if correct                 
+                        with open("phrases2.txt", "r") as f:
+                            phrases = f.readlines()
+                            test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
+                        input_msg = []
+                        phrase_chars = {}
+                        for idx, symbol in enumerate(test_phrase):
+                            phrase_chars[idx] = [idx * 30, symbol, (105, 105, 105)]
+                    #     if input_msg == list(test_phrase):
+                    #     cv2.putText(cv2_img_processed, "Phrase correct!", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                    #     time.sleep(0.1)
+                    #     print("Phrase correct!")
+                    #     test_phrase = refresh_phrase()
+                    #     input_msg = []
+                    #     output_msg = ""
+                    #     for char in phrase_chars:
+                    #         phrase_chars[char][2] = (0, 0, 0)
+                    # else:
+                    #     cv2.putText(cv2_img_processed, "Phrase incorrect!", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                    #     time.sleep(0.1)
+                    #     print("Phrase incorrect!")
+                    #     input_msg = []
+                    #     output_msg = ""
+                    #     for char in phrase_chars:
+                    #         phrase_chars[char][2] = (0, 0, 0)
                     
                 elif distance(thumb_top, landmark_pos) <= 70 and char_written:
                     pass
@@ -219,5 +255,5 @@ while True:
                     CHAR_DICT[hand_label][idx][1] = False
 
 
-    cv2.imshow("CamOutput", cv2_img_processed)
+    cv2.imshow("Cam Output", cv2_img_processed)
     cv2.waitKey(1)       
