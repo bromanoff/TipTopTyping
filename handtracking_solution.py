@@ -7,6 +7,7 @@ from subprocess import call
 import numpy as np
 from trie import Trie, TrieNode
 import math
+from playsound import playsound
 
 # TODO: Candidate Selection based on word appearance frequency
 # TODO: Backspace, Return and Spacebar
@@ -26,7 +27,7 @@ CHAR_DICT = {"Right": {
 SPRACHE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world"]  
 # test_phrase = "important news always seems to be late"
 # pull random phrase from phrases2.txt and save it in a variable
-with open("phrases2.txt", "r") as f:
+with open("phrases/phrases2.txt", "r") as f:
     phrases = f.readlines()
     test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
 
@@ -77,11 +78,13 @@ def write_char(hand, target):
         for idx, char in enumerate(test_phrase):
             # print(f"idx: {idx}, char: {char}")
             try:
-                # FIXME: color letter logic, faulty spcaebar, color reset when backspacing
+                # FIXME: mutliple sounds
                 if char in input_msg[idx]:
                     phrase_chars[idx][2] = (0, 255, 0)
+                    playsound("soundFX/focus_change_app_icon.caf")
                 else:
                     phrase_chars[idx][2] = (255, 0, 0)
+                    playsound("soundFX/focus_change_large.caf")
             except IndexError:
                 continue
     else:
@@ -214,7 +217,7 @@ while True:
 
                 # TODO: change font of finger annotations
                 # draw.text((int(landmark_pos[0]), int(landmark_pos[1])), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
-                cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 255), 2)
+                cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2)
                 
                 
                 # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
@@ -223,7 +226,7 @@ while True:
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
                     if len(input_msg) == len(test_phrase): # if input message is as long as test phrase, check if correct                 
-                        with open("phrases2.txt", "r") as f:
+                        with open("phrases/phrases2.txt", "r") as f:
                             phrases = f.readlines()
                             test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
                         input_msg = []
