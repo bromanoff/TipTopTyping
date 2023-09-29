@@ -24,7 +24,7 @@ CHAR_DICT = {"Right": {
                 2: ["vbnm", False],
                 3: ["<-", False]}}
 
-SPRACHE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world"]  
+LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world"]  
 # test_phrase = "important news always seems to be late"
 # pull random phrase from phrases2.txt and save it in a variable
 with open("phrases/phrases2.txt", "r") as f:
@@ -38,7 +38,7 @@ for idx, symbol in enumerate(test_phrase):
     
 # Trie Datastruture to store and query language
 trie = Trie()
-trie.extend(SPRACHE)
+trie.extend(LANGUAGE)
                   
 #opening camera (0 for the default camera, when iPhone continuity camera is active, it will become the default (0))
 videoCap = cv2.VideoCapture(0)
@@ -54,21 +54,6 @@ def distance(pos1, pos2): #pos = (x, y)
     Distance = int(math.sqrt(((pos2[0] - pos1[0]) * (pos2[0] - pos1[0])) + ((pos2[1] - pos1[1]) * (pos2[1] - pos1[1]))))
     return Distance
 
-# def write_char(hand, target):
-#     global input_msg
-#     global output_msg
-#     if not target == 3:
-#         input_msg.append(CHAR_DICT[hand][target][0])
-#         CHAR_DICT[hand][target][1] = True
-#     else:
-#         match hand:
-#             case "Left":
-#                 output_msg += " "
-#                 CHAR_DICT[hand][target][1] = True
-#             case "Right":
-#                 output_msg = output_msg[:-1]
-#                 time.sleep(0.2)
-
 def write_char(hand, target):
     global input_msg
     global output_msg
@@ -81,10 +66,10 @@ def write_char(hand, target):
                 # FIXME: mutliple sounds
                 if char in input_msg[idx]:
                     phrase_chars[idx][2] = (0, 255, 0)
-                    playsound("soundFX/focus_change_app_icon.caf")
+                    playsound("soundFX/key_press_click.caf")
                 else:
                     phrase_chars[idx][2] = (255, 0, 0)
-                    playsound("soundFX/focus_change_large.caf")
+                    playsound("soundFX/key_press_normal.caf")
             except IndexError:
                 continue
     else:
@@ -92,15 +77,18 @@ def write_char(hand, target):
             case "Right":
                 input_msg += " "
                 output_msg += " "
+                playsound("soundFX/key_press_click.caf")
                 CHAR_DICT[hand][target][1] = True
             case "Left":
                 CHAR_DICT[hand][target][1] = True
                 try:
                     phrase_chars[len(input_msg)-1][2] = (105, 105, 105) # turn deleted character gray again
+                    input_msg = input_msg[:-1]
+                    output_msg = output_msg[:-1]
+                    playsound("soundFX/key_press_delete.caf")
                 except KeyError:
                     pass
-                input_msg = input_msg[:-1]
-                output_msg = output_msg[:-1]
+                
 
     print(f"Input Message: {input_msg}")
     
@@ -147,8 +135,8 @@ while True:
     cv2_img_rgb = cv2.cvtColor(img,cv2.COLOR_BGR2RGB) 
     pil_img = Image.fromarray(cv2_img_rgb)  
     draw = ImageDraw.Draw(pil_img)  
-    font = ImageFont.truetype("RobotoMono-Regular.ttf", 50) # use a truetype font 
-    finger_font = ImageFont.truetype("AtkinsonHyperlegible-Regular.ttf", 30) # accessible font for finger annotations
+    font = ImageFont.truetype("fonts/RobotoMono-Regular.ttf", 50) # use a truetype font 
+    finger_font = ImageFont.truetype("fonts/AtkinsonHyperlegible-Regular.ttf", 30) # accessible font for finger annotations
     for char in phrase_chars.values():
         draw.text(((400 + char[0]), 890), char[1], font=font, fill=char[2]) # put text on image (FIXME: text is not centered)
     cv2_img_processed = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR) 
@@ -215,7 +203,6 @@ while True:
                 # landmark_pos = (int(point.x * w), int(point.y * h))
                 landmark_pos = (point.x * w, point.y * h)
 
-                # TODO: change font of finger annotations
                 # draw.text((int(landmark_pos[0]), int(landmark_pos[1])), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
                 cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2)
                 
