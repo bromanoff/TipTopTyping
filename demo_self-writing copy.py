@@ -36,14 +36,22 @@ CHAR_DICT = {"Right": {
 #                 2: ["VBNM", False],
 #                 3: ["<-", False]}}
 
-LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]  
+# LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
+# populate language with every word from phrase
+LANGUAGE = []
+with open("phrases/phrases2.txt", "r") as file:
+    content_without_newlines = ''.join(file.readlines()).replace('\n', ' ')
+    words = content_without_newlines.split(" ")
+    LANGUAGE.extend(words)
+# print(LANGUAGE)
 
 # pull random phrase from phrases2.txt and save it in a variable
 with open("phrases/phrases2.txt", "r") as f:
     phrases = f.readlines()
     test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
     
-test_phrase = "hello world test phrase"
+# test_phrase = "hello world test phrase"
+# test_phrase = "haus maus maut mann"
 test_phrase_words = test_phrase.split(" ")
 print("test phrase words: ", test_phrase_words)
 
@@ -62,7 +70,6 @@ frame = 0
 handSolution = mp.solutions.hands
 hands = handSolution.Hands()
 
-input_msg = []
 input_sequence = []
 output_msg = ""
 word_preview = ""
@@ -91,28 +98,46 @@ def word_completed():
         pass
     return False
 
+def slice_at_blankspace(input_sequence):
+    '''FIXME: in complete
+    for group in prefix_groups: TypeError: 'NoneType' object is not iterable
+    '''
+    if completed_words != 0:
+        try:
+            blankspace_indices = [i for i, char in enumerate(input_sequence) if char == ' '] # save the index of every blankspace in input sequence
+            return input_sequence[blankspace_indices[-1]+1:] 
+        except IndexError or TypeError:
+            pass
+    else:
+        return input_sequence
+
 def write_char(hand, target):
-    global input_msg
-    global output_msg
     global input_sequence
+    global output_msg
     global word_preview
     if not target == 3: #pinky
         input_sequence.append(CHAR_DICT[hand][target][0])
-        input_msg.append(CHAR_DICT[hand][target][0])
-        print("input_msg: ", input_msg)
+        print("input_sequence: ", input_sequence)
         
-        remove_whitespace = lambda input_msg : input_msg[1:] if input_msg[0].isspace() else input_msg # lambda function for validating clean inputs
-        trie_list = list(trie.complete(remove_whitespace(input_msg)))
+        # FIXME: remove whitespace and previous word from input_sequence
+        # slice_at_blankspace = lambda input_sequence : input_sequence[input_sequence.index(' ')+1:] if completed_words != 0 else input_sequence # lambda function for validating clean inputs
+        # try:
+        #     trie_list = list(trie.complete(slice_at_blankspace(input_sequence)))
+        #     print("trie list: ", trie_list)
+        # except ValueError:
+        #     pass
+        print("cut input sequence: ", slice_at_blankspace(input_sequence))
+        trie_list = list(trie.complete(slice_at_blankspace(input_sequence)))
         
         line_pos_x[0] += 30
         line_pos_x[1] += 30
         CHAR_DICT[hand][target][1] = True
-        if len(input_msg) >= 0: # coloring displayed sentence and soundFX when user types
-            if test_phrase[len(input_msg)-1] in input_msg[len(input_msg)-1]:
-                phrase_chars[len(input_msg)-1][2] = (0, 255, 0)
+        if len(input_sequence) >= 0: # coloring displayed sentence and soundFX when user types
+            if test_phrase[len(input_sequence)-1] in input_sequence[len(input_sequence)-1]:
+                phrase_chars[len(input_sequence)-1][2] = (0, 255, 0)
                 playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/key_press_click.caf")
             else:
-                phrase_chars[len(input_msg)-1][2] = (255, 0, 0)
+                phrase_chars[len(input_sequence)-1][2] = (255, 0, 0)
                 playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/keyboard_press_normal.caf")
 
 ############################################################################################################
@@ -123,45 +148,57 @@ def write_char(hand, target):
 
         print(f"trie list: {trie_list}")
         if trie_list == []: # if no candidates are found, add first character of character group to output message
-            output_msg += input_msg[-1][0]
+            output_msg += input_sequence[-1][0]
             word_preview = ""
             print("output_msg: " + output_msg)
         else:
             word_preview = trie_list[0]
-            print("word completion: " + word_preview)
-            for char in input_msg[-1]:                              # for character in last entered group (input_msg[-1])
-                # if char in test_phrase[len(input_msg)-1]:           # if character is equal to character with same index in test phrase
-                print(f"if {char} in {test_phrase_words[completed_words][len(input_msg)-1]}")
-                if char in test_phrase_words[completed_words][len(input_msg)-1]:  
-                    # print(f"if {char} in {test_phrase[len(input_msg)-1]}")
+            cut_input_sequence = slice_at_blankspace(input_sequence)
+            print("word_preview: " + word_preview)
+            for char in input_sequence[-1]:                             # for character in last entered group (input_sequence[-1])
+                # print(f"if {char} in {test_phrase_words[completed_words][len(cut_input_sequence)-1]}")
+                #FIXME: Fix for vast amounts of trie list candidates
+                if char in test_phrase_words[completed_words][len(cut_input_sequence)-1]:         # if character is equal to character with same index in test phrase
+                    if len(trie_list) == 1:                             # if word completion is only one character long
+                        if output_msg in test_phrase:                   # if output message is equal to test phrase, pass
+                            pass
+                        else:                                           # if output message is not equal to test phrase, correct output message
+                            try:
+                                output_msg += char 
+                                # print("output_msg BEFORE replacement: " + output_msg)
+                                # print("word_preview: " + word_preview)
+                                # print("replace:", output_msg[-(len(cut_input_sequence)):] + " with: " + word_preview[:len(cut_input_sequence)])
+                                output_msg = output_msg.replace(output_msg[-(len(cut_input_sequence)):], word_preview[:len(cut_input_sequence)]) # replace last entered group with word completion
+                                # print("output_msg AFTER replacement: " + output_msg)
+                                break
+                            except IndexError:
+                                pass
                     output_msg += char                              # add character to output message
-                    print("output_msg: " + output_msg)
+                    print("output_msg 1: " + output_msg)
                 else:
-                    if char in word_preview[len(input_msg)-1]:   # if character is equal to character with same index in word completion
-                        output_msg += char                          # add character to output message
-                        print("output_msg: " + output_msg)
+                    if char in word_preview[len(cut_input_sequence)-1]: # if character is equal to character with same index in word completion
+                        output_msg += char                              # add character to output message
+                        print("output_msg 2: " + output_msg)
+                        break
+                    
+                        
     
 ############################################################################################################
 
     else: # pinky inputs
         match hand:
             case "Right":
-                # TODO: might remove the space restriction
-                # if input_msg != [] or completed_words != 0: # only allow space if not first character of user input
-                    input_msg += " "
-                    output_msg += " "
-                    line_pos_x[0] += 30
-                    line_pos_x[1] += 30
-                    playsound("soundFX/key_press_click.caf")
-                    CHAR_DICT[hand][target][1] = True
-                    # trie_list = lambda input_msg: [] if input_msg == [' '] else list(trie.complete(input_msg)) # lambda function for validating clean inputs
-                    # print("trie_list: ", trie_list(input_msg))
-                    # print(f"trie_list: {trie_list(input_msg)} after lambda")       
+                input_sequence += " "
+                output_msg += " "
+                line_pos_x[0] += 30
+                line_pos_x[1] += 30
+                playsound("soundFX/key_press_click.caf")
+                CHAR_DICT[hand][target][1] = True
             case "Left":
                 CHAR_DICT[hand][target][1] = True
                 try:
-                    phrase_chars[len(input_msg)-1][2] = (105, 105, 105) # turn deleted character gray again
-                    input_msg = input_msg[:-1]
+                    phrase_chars[len(input_sequence)-1][2] = (105, 105, 105) # turn deleted character gray again
+                    input_sequence = input_sequence[:-1]
                     output_msg = output_msg[:-1]
                     line_pos_x[0] -= 30
                     line_pos_x[1] -= 30
@@ -174,11 +211,11 @@ def write_char(hand, target):
     #     print(f"Tree children: {trie.children(char)}")
     
     # # autocompletion
-    # result = list(trie.complete(input_msg)) # get list of possible words
+    # result = list(trie.complete(input_sequence)) # get list of possible words
     # if len(result) == 1:    # if there is only one result, autocomplete
     #     output_msg += result[0] + " "
     #     print(output_msg)
-    #     input_msg = []
+    #     input_sequence = []
     # # time.sleep(0.1)
 
 def char_written(hand, target):
@@ -198,6 +235,13 @@ def vector(t1, t2):
 #     for char in phrase:
 #         cv2.putText(cv2_img_processed, char, ((400 + position), 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
 #         position += 30
+
+# def reset():
+#     input_sequence = []
+#     output_msg = ""
+#     phrase_chars = {}
+#     word_preview = ""
+#     line_pos_x = [400, 430]
     
 while True:
     frame += 1
@@ -272,13 +316,16 @@ while True:
                 right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
             
             try: #exception handling for first iteration with uncomputed right pinky tip
-                if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20 and not input_msg == []:
-                    input_msg = []
+                if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20 and not input_sequence == []:
+                    completed_words = 0
+                    input_sequence = []
                     output_msg = ""
+                    phrase_chars = {}
+                    word_preview = ""
+                    line_pos_x = [400, 430]
                     for char in phrase_chars:
                         phrase_chars[char][2] = (0, 0, 0)
                     cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    line_pos_x = [400, 430]
                     print("Input message cleared")
                     playsound("soundFX/keyboard_press_clear.caf")
                     time.sleep(0.1)
@@ -303,21 +350,23 @@ while True:
                 
                 
                 # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
-                # TODO: OR: Only allow characters that are child nodes of chars in input_msg
+                # TODO: OR: Only allow characters that are child nodes of chars in input_sequence
                 
                 # INFO: detect pinch gesture
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
                     if word_completed():
                         word_preview = ""
-                        input_msg = []
-                    if len(input_msg) == len(test_phrase): # if input message is as long as test phrase, check if correct                 
+                    if len(input_sequence) == len(test_phrase): # if input message is as long as test phrase, check if correct                 
                         with open("phrases/phrases2.txt", "r") as f:
                             phrases = f.readlines()
                             test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
-                        input_msg = []
-                        phrase_chars = {}
-                        line_pos_x = [400, 430]
+                            completed_words = 0
+                            input_sequence = []
+                            output_msg = ""
+                            phrase_chars = {}
+                            word_preview = ""
+                            line_pos_x = [400, 430]
                         for idx, symbol in enumerate(test_phrase):
                             phrase_chars[idx] = [idx * 30, symbol, (105, 105, 105)]
 
