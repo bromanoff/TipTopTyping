@@ -51,13 +51,14 @@ with open("phrases/phrases2.txt", "r") as f:
     test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
     
 # test_phrase = "hello world test phrase"
-# test_phrase = "haus maus maut mann"
+# test_phrase = "lost in translation"
+# test_phrase = "accompanied by an adult"
 test_phrase_words = test_phrase.split(" ")
 print("test phrase words: ", test_phrase_words)
 
 phrase_chars = {}
 for idx, symbol in enumerate(test_phrase):
-    phrase_chars[idx] = [idx * 30, symbol, (105, 105, 105)]
+    phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
     
 # Trie Datastruture to store and query language
 trie = Trie()
@@ -78,10 +79,14 @@ completed_words = 0
 line_pos_x = [400, 430]
 
 # find whitepsace indices in test phrase
-from string import whitespace
-test_phrase_whitespace = [i+1 for i, char in enumerate(test_phrase) if char in whitespace]
-test_phrase_whitespace.insert(0, 0)
-print(test_phrase_whitespace)
+def calculate_phrase_whitespace(phrase):
+    from string import whitespace
+    test_phrase_whitespace = [i+1 for i, char in enumerate(phrase) if char in whitespace]
+    test_phrase_whitespace.insert(0, 0)
+    print(test_phrase_whitespace)
+    return test_phrase_whitespace
+
+test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
 
 def distance(pos1, pos2): #pos = (x, y)
     Distance = int(math.sqrt(((pos2[0] - pos1[0]) * (pos2[0] - pos1[0])) + ((pos2[1] - pos1[1]) * (pos2[1] - pos1[1]))))
@@ -99,9 +104,6 @@ def word_completed():
     return False
 
 def slice_at_blankspace(input_sequence):
-    '''FIXME: in complete
-    for group in prefix_groups: TypeError: 'NoneType' object is not iterable
-    '''
     if completed_words != 0:
         try:
             blankspace_indices = [i for i, char in enumerate(input_sequence) if char == ' '] # save the index of every blankspace in input sequence
@@ -117,73 +119,101 @@ def write_char(hand, target):
     global word_preview
     if not target == 3: #pinky
         input_sequence.append(CHAR_DICT[hand][target][0])
-        print("input_sequence: ", input_sequence)
-        
-        # FIXME: remove whitespace and previous word from input_sequence
-        # slice_at_blankspace = lambda input_sequence : input_sequence[input_sequence.index(' ')+1:] if completed_words != 0 else input_sequence # lambda function for validating clean inputs
-        # try:
-        #     trie_list = list(trie.complete(slice_at_blankspace(input_sequence)))
-        #     print("trie list: ", trie_list)
-        # except ValueError:
-        #     pass
-        print("cut input sequence: ", slice_at_blankspace(input_sequence))
+        cut_input_sequence = slice_at_blankspace(input_sequence)
+        print("INPUT SEQUENCE: ", input_sequence)
+        print("CUT INPUT SEQUENCE: ", cut_input_sequence)
+        print("TEST PHRASE WORDS: ", test_phrase_words)
         trie_list = list(trie.complete(slice_at_blankspace(input_sequence)))
-        
         line_pos_x[0] += 30
         line_pos_x[1] += 30
         CHAR_DICT[hand][target][1] = True
+        
         if len(input_sequence) >= 0: # coloring displayed sentence and soundFX when user types
-            if test_phrase[len(input_sequence)-1] in input_sequence[len(input_sequence)-1]:
-                phrase_chars[len(input_sequence)-1][2] = (0, 255, 0)
-                playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/key_press_click.caf")
-            else:
-                phrase_chars[len(input_sequence)-1][2] = (255, 0, 0)
-                playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/keyboard_press_normal.caf")
-
-############################################################################################################
+            try:
+                if test_phrase[len(input_sequence)-1] in input_sequence[len(input_sequence)-1]:
+                    phrase_chars[len(input_sequence)-1][2] = (0, 255, 0)
+                    playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/key_press_click.caf")
+                else:
+                    phrase_chars[len(input_sequence)-1][2] = (255, 0, 0)
+                    playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/keyboard_press_normal.caf")
+            except KeyError:
+                pass
+            
+################################################### SELF TYPING #########################################################
 
     # TODO: display first char of entered group as user types
     # TODO: display first candidate as word extension 
     # TODO: implement candidate selection on space
 
-        print(f"trie list: {trie_list}")
+        print(f"TRIE LIST: {trie_list}")
         if trie_list == []: # if no candidates are found, add first character of character group to output message
             output_msg += input_sequence[-1][0]
             word_preview = ""
-            print("output_msg: " + output_msg)
+            print("OUTPUT MSG NO TRIE LIST: " + output_msg)
         else:
-            word_preview = trie_list[0]
-            cut_input_sequence = slice_at_blankspace(input_sequence)
-            print("word_preview: " + word_preview)
-            for char in input_sequence[-1]:                             # for character in last entered group (input_sequence[-1])
-                # print(f"if {char} in {test_phrase_words[completed_words][len(cut_input_sequence)-1]}")
-                #FIXME: Fix for vast amounts of trie list candidates
-                if char in test_phrase_words[completed_words][len(cut_input_sequence)-1]:         # if character is equal to character with same index in test phrase
-                    if len(trie_list) == 1:                             # if word completion is only one character long
-                        if output_msg in test_phrase:                   # if output message is equal to test phrase, pass
-                            pass
-                        else:                                           # if output message is not equal to test phrase, correct output message
-                            try:
-                                output_msg += char 
-                                # print("output_msg BEFORE replacement: " + output_msg)
-                                # print("word_preview: " + word_preview)
-                                # print("replace:", output_msg[-(len(cut_input_sequence)):] + " with: " + word_preview[:len(cut_input_sequence)])
-                                output_msg = output_msg.replace(output_msg[-(len(cut_input_sequence)):], word_preview[:len(cut_input_sequence)]) # replace last entered group with word completion
-                                # print("output_msg AFTER replacement: " + output_msg)
-                                break
-                            except IndexError:
-                                pass
-                    output_msg += char                              # add character to output message
-                    print("output_msg 1: " + output_msg)
+            # if test_phrase_words[completed_words] in trie_list[:3]: #simulating a 3-fold candidate selection
+            if len(trie_list) == 1:
+                word_preview_found = True
+                word_preview = trie_list[0]
+                print("TRUE WORD PREVIEW: " + word_preview)
+            elif test_phrase_words[completed_words] == trie_list[-3:]: # for edge cases with abiguous candidates
+                word_preview_found = True
+                word_preview = test_phrase_words[completed_words]
+                print("TRUE WORD PREVIEW: " + word_preview)
+            elif test_phrase_words[completed_words] in trie_list[:len(trie_list)//2]: # workaround for candidate selection
+                word_preview_found = True
+                word_preview = test_phrase_words[completed_words]
+                print("TRUE WORD PREVIEW: " + word_preview)
+            else:
+                word_preview_found = False
+                word_preview = trie_list[0]
+                print("FALSE WORD PREVIEW: " + word_preview)
+                
+            for char in input_sequence[-1]: 
+                if char == word_preview[len(cut_input_sequence)-1]:
+                    output_msg += char
+                    output_msg = output_msg.replace(output_msg[-(len(cut_input_sequence)):], word_preview[:len(cut_input_sequence)])
+                    print("OUTPUT CASE 0: " + output_msg)
+                    break
                 else:
-                    if char in word_preview[len(cut_input_sequence)-1]: # if character is equal to character with same index in word completion
-                        output_msg += char                              # add character to output message
-                        print("output_msg 2: " + output_msg)
-                        break
+                    continue
+            else:
+                output_msg += input_sequence[-1][0]
+                print("OUTPUT CASE 2: " + output_msg)
+
+                
+            
+            # for char in input_sequence[-1]:                             # for character in last entered group (input_sequence[-1])
+            #     if char in test_phrase_words[completed_words][len(cut_input_sequence)-1]:         # if character is equal to character with same index in test phrase
+            #         # FIXME: fix word preview when flagged
+            #         if word_preview_found:                             # if word completion is only one character long
+            #             if output_msg in test_phrase:                   # if output message is equal to test phrase, pass
+            #                 pass
+            #             else:                                           # if output message is not equal to test phrase, correct output message
+            #                 try:
+            #                     output_msg += char 
+            #                     # print("output_msg BEFORE replacement: " + output_msg)
+            #                     # print("word_preview: " + word_preview)
+            #                     # print("replace:", output_msg[-(len(cut_input_sequence)):] + " with: " + word_preview[:len(cut_input_sequence)])
+            #                     output_msg = output_msg.replace(output_msg[-(len(cut_input_sequence)):], word_preview[:len(cut_input_sequence)]) # replace last entered group with word completion
+            #                     # print("output_msg AFTER replacement: " + output_msg)
+            #                     break
+            #                 except IndexError:
+            #                     pass
+            #         output_msg += char                              # add character to output message
+            #         word_preview_found = False
+            #         print("output_msg 1: " + output_msg)
+            #     #FIXME: Fix index error: list index out of range
+            #     else:
+            #         if char in word_preview[len(cut_input_sequence)-1]: # if character is equal to character with same index in word completion
+            #             output_msg += char                              # add character to output message
+            #             word_preview_found = False
+            #             print("output_msg 2: " + output_msg)
+            #             break
                     
                         
     
-############################################################################################################
+################################################## SELF TYPING ##########################################################
 
     else: # pinky inputs
         match hand:
@@ -197,7 +227,7 @@ def write_char(hand, target):
             case "Left":
                 CHAR_DICT[hand][target][1] = True
                 try:
-                    phrase_chars[len(input_sequence)-1][2] = (105, 105, 105) # turn deleted character gray again
+                    phrase_chars[len(input_sequence)-1][2] = (50, 50, 50) # turn deleted character gray again
                     input_sequence = input_sequence[:-1]
                     output_msg = output_msg[:-1]
                     line_pos_x[0] -= 30
@@ -259,10 +289,10 @@ while True:
     draw = ImageDraw.Draw(pil_img)  
     font = ImageFont.truetype("fonts/RobotoMono-Regular.ttf", 50) # use a truetype font 
     finger_font = ImageFont.truetype("fonts/AtkinsonHyperlegible-Regular.ttf", 30) # accessible font for finger annotations
-    draw.text((400, 690), test_phrase, font=font, fill=(0, 0, 0)) # display test phrase on image
-    # for char in phrase_chars.values():
-    #     # INFO: Initital y-pos: 890
-    #     draw.text(((400 + char[0]), 690), char[1], font=font, fill=char[2])
+    # draw.text((400, 790), test_phrase, font=font, fill=(0, 0, 0)) # display test phrase on image
+    for char in phrase_chars.values():
+        # INFO: Initital y-pos: 890
+        draw.text(((400 + char[0]), 790), char[1], font=font, fill=char[2])
     try:
         draw.text(((400 + (test_phrase_whitespace[completed_words]*30)), 890), word_preview, font=font, fill=(105, 105, 105))
     except IndexError:
@@ -361,14 +391,16 @@ while True:
                         with open("phrases/phrases2.txt", "r") as f:
                             phrases = f.readlines()
                             test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
-                            completed_words = 0
-                            input_sequence = []
-                            output_msg = ""
-                            phrase_chars = {}
-                            word_preview = ""
-                            line_pos_x = [400, 430]
+                        test_phrase_words = test_phrase.split(" ")
+                        completed_words = 0
+                        input_sequence = []
+                        output_msg = ""
+                        phrase_chars = {}
+                        word_preview = ""
+                        line_pos_x = [400, 430]
+                        test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
                         for idx, symbol in enumerate(test_phrase):
-                            phrase_chars[idx] = [idx * 30, symbol, (105, 105, 105)]
+                            phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
 
                     
                 elif distance(thumb_top, landmark_pos) <= 70 and char_written:
