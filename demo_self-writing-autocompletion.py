@@ -13,6 +13,7 @@ from playsound import playsound
 # TODO: change false character in test phrase to first of input message
 
 # Palm facing mental model 
+CHAR_GROUPS = ["asdf", "qwert", "zxc", "yuiop", "ghjkl", "vbnm"]
 CHAR_DICT = {"Right": {
     			0: ["qwert", False],
                 1: ["asdf", False],
@@ -97,6 +98,7 @@ def word_completed():
     try: 
         if output_msg.split(" ")[completed_words] == test_phrase_words[completed_words]:
             completed_words += 1
+            word_preview = ""
             print("WORD COMPLETED #########################################################")
             return True
     except IndexError:
@@ -141,7 +143,7 @@ def write_char(hand, target):
             
 ################################################### SELF TYPING #########################################################
 
-
+        # INFO: Self Typing logic
         print(f"TRIE LIST: {trie_list}")
         if trie_list == []: # if no candidates are found, add first character of character group to output message
             output_msg += input_sequence[-1][0]
@@ -153,7 +155,11 @@ def write_char(hand, target):
                 word_preview_found = True
                 word_preview = trie_list[0]
                 print("TRUE WORD PREVIEW: " + word_preview)
-            # FIXME: always display word preview when available for testing without autocompletion
+            # elif test_phrase_words[completed_words] in trie_list: # show word preview when available
+            #     word_preview_found = True
+            #     word_preview = test_phrase_words[completed_words]
+            #     print("TRUE WORD PREVIEW: " + word_preview)
+            
             elif test_phrase_words[completed_words] == trie_list[-3:]: # for edge cases with abiguous candidates
                 word_preview_found = True
                 word_preview = test_phrase_words[completed_words]
@@ -162,13 +168,14 @@ def write_char(hand, target):
                 word_preview_found = True
                 word_preview = test_phrase_words[completed_words]
                 print("TRUE WORD PREVIEW: " + word_preview)
+            
             else:
                 word_preview_found = False
                 word_preview = trie_list[0]
                 print("FALSE WORD PREVIEW: " + word_preview)
                 
-            for char in input_sequence[-1]: 
-                if char == word_preview[len(cut_input_sequence)-1]:
+            for char in input_sequence[-1]:                             # for character in last entered group (input_sequence[-1])
+                if char == word_preview[len(cut_input_sequence)-1]:     # if character (in char-group) is equal to character at given phraseindex in word preview 
                     output_msg += char
                     output_msg = output_msg.replace(output_msg[-(len(cut_input_sequence)):], word_preview[:len(cut_input_sequence)])
                     print("OUTPUT CASE 0: " + output_msg)
@@ -216,12 +223,30 @@ def write_char(hand, target):
     else: # pinky inputs
         match hand:
             case "Right":
-                input_sequence += " "
-                output_msg += " "
-                line_pos_x[0] += 30
-                line_pos_x[1] += 30
-                playsound("soundFX/key_press_click.caf")
-                CHAR_DICT[hand][target][1] = True
+                # INFO: candidate selection on space
+                cut_input_sequence = slice_at_blankspace(input_sequence)
+                if not word_preview == "":
+                    print("autocomplete: ", test_phrase_words[completed_words][len(cut_input_sequence):])
+                    output_msg += test_phrase_words[completed_words][len(cut_input_sequence):] + " "
+                    line_pos_x[0] += (len(test_phrase_words[completed_words])-len(cut_input_sequence)+1)*30
+                    line_pos_x[1] += (len(test_phrase_words[completed_words])-len(cut_input_sequence)+1)*30
+                    for letter in test_phrase_words[completed_words][len(cut_input_sequence):]:                 # for letter in completion suffix
+                        for char_group in CHAR_GROUPS:
+                            if letter in char_group:
+                                input_sequence.append(char_group)
+                                break
+                    else:
+                        input_sequence += " "
+                    playsound("soundFX/key_press_click.caf")
+                    CHAR_DICT[hand][target][1] = True
+                    pass
+                else:
+                    input_sequence += " "
+                    output_msg += " "
+                    line_pos_x[0] += 30
+                    line_pos_x[1] += 30
+                    playsound("soundFX/key_press_click.caf")
+                    CHAR_DICT[hand][target][1] = True
             case "Left":
                 CHAR_DICT[hand][target][1] = True
                 try:
@@ -377,7 +402,7 @@ while True:
                     write_char(hand_label, idx)
                     if word_completed():
                         word_preview = ""
-                    if len(input_sequence) == len(test_phrase): # if input message is as long as test phrase, check if correct                 
+                    if len(input_sequence) >= len(test_phrase): # if input message is as long as test phrase, check if correct                 
                         with open("phrases/phrases2.txt", "r") as f:
                             phrases = f.readlines()
                             test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
