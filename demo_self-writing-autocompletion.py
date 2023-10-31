@@ -8,9 +8,11 @@ import numpy as np
 from trie import Trie, TrieNode
 import math
 from playsound import playsound
+import pandas as pd
 
-# TODO: Candidate Selection based on word appearance frequency
-# TODO: change false character in test phrase to first of input message
+
+# TODO: CPS -> Character typed, seconds passed -> WPM
+# TODO: KSPC: Keystrokes per character, write_char called, number of characters in test phrase
 
 # Palm facing mental model 
 CHAR_GROUPS = ["asdf", "qwert", "zxc", "yuiop", "ghjkl", "vbnm"]
@@ -38,18 +40,21 @@ CHAR_DICT = {"Right": {
 #                 3: ["<-", False]}}
 
 # LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
-# populate language with every word from phrase
+
 LANGUAGE = []
-with open("phrases/phrases2.txt", "r") as file:
+with open("phrases/phrases2_for_autocomplete.txt", "r") as file: # populate language with every word from phrases2.txt
     content_without_newlines = ''.join(file.readlines()).replace('\n', ' ')
     words = content_without_newlines.split(" ")
     LANGUAGE.extend(words)
 # print(LANGUAGE)
 
 # pull random phrase from phrases2.txt and save it in a variable
-with open("phrases/phrases2.txt", "r") as f:
+with open("phrases/phrases2_for_autocomplete.txt", "r") as f:
     phrases = f.readlines()
     test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
+
+shown_sentences = 1
+shown_characters = len(test_phrase)
     
 # test_phrase = "hello world test phrase"
 # test_phrase = "lost in translation"
@@ -72,10 +77,17 @@ frame = 0
 handSolution = mp.solutions.hands
 hands = handSolution.Hands()
 
+completed_words = 0
+
 input_sequence = []
 output_msg = ""
 word_preview = ""
-completed_words = 0
+typed_sentences = 0
+typed_words = 0
+key_strokes = 0
+entered_chars = 0
+deleted_chars = 0
+action_based_df = pd.DataFrame(columns=["time", "timestamp", "phrase", "word", "to type", "typed key", ])
 
 line_pos_x = [400, 430]
 
@@ -95,9 +107,11 @@ def distance(pos1, pos2): #pos = (x, y)
 
 def word_completed():
     global completed_words
+    global typed_words
     try: 
         if output_msg.split(" ")[completed_words] == test_phrase_words[completed_words]:
             completed_words += 1
+            typed_words += 1
             word_preview = ""
             print("WORD COMPLETED #########################################################")
             return True
@@ -119,6 +133,22 @@ def write_char(hand, target):
     global input_sequence
     global output_msg
     global word_preview
+    global key_strokes
+    global entered_chars
+    global deleted_chars
+    global action_based_df
+    # data collection metrics
+    key_strokes += 1
+    action_based_data = {"time": [datetime.datetime.now().strftime("%H:%M:%S.%f")],
+                         "timestamp": [time.time()],
+                        "phrase": [test_phrase],
+                        "word": [test_phrase_words[completed_words]],
+                        "to type": [test_phrase[len(input_sequence)]],
+                        "typed key": [CHAR_DICT[hand][target][0]],
+                        
+                        }
+    action_based_df = pd.concat([action_based_df, pd.DataFrame.from_dict(action_based_data)], ignore_index=True)
+    
     if not target == 3: #pinky
         input_sequence.append(CHAR_DICT[hand][target][0])
         cut_input_sequence = slice_at_blankspace(input_sequence)
@@ -129,7 +159,7 @@ def write_char(hand, target):
         line_pos_x[0] += 30
         line_pos_x[1] += 30
         CHAR_DICT[hand][target][1] = True
-        
+        entered_chars += 1
         if len(input_sequence) >= 0: # coloring displayed sentence and soundFX when user types
             try:
                 if test_phrase[len(input_sequence)-1] in input_sequence[len(input_sequence)-1]:
@@ -222,21 +252,22 @@ def write_char(hand, target):
 
     else: # pinky inputs
         match hand:
-            case "Right":
-                # INFO: candidate selection on space
+            case "Right": # space
                 cut_input_sequence = slice_at_blankspace(input_sequence)
-                if not word_preview == "":
+                if not word_preview == "": #candidate selection on space
                     print("autocomplete: ", test_phrase_words[completed_words][len(cut_input_sequence):])
                     output_msg += test_phrase_words[completed_words][len(cut_input_sequence):] + " "
                     line_pos_x[0] += (len(test_phrase_words[completed_words])-len(cut_input_sequence)+1)*30
                     line_pos_x[1] += (len(test_phrase_words[completed_words])-len(cut_input_sequence)+1)*30
-                    for letter in test_phrase_words[completed_words][len(cut_input_sequence):]:                 # for letter in completion suffix
+                    for letter in test_phrase_words[completed_words][len(cut_input_sequence):]:  # for letter in completion suffix
                         for char_group in CHAR_GROUPS:
                             if letter in char_group:
                                 input_sequence.append(char_group)
+                                entered_chars += 1
                                 break
                     else:
                         input_sequence += " "
+                        entered_chars += 1
                     playsound("soundFX/key_press_click.caf")
                     CHAR_DICT[hand][target][1] = True
                     pass
@@ -245,9 +276,10 @@ def write_char(hand, target):
                     output_msg += " "
                     line_pos_x[0] += 30
                     line_pos_x[1] += 30
+                    entered_chars += 1
                     playsound("soundFX/key_press_click.caf")
                     CHAR_DICT[hand][target][1] = True
-            case "Left":
+            case "Left": # delete last character
                 CHAR_DICT[hand][target][1] = True
                 try:
                     phrase_chars[len(input_sequence)-1][2] = (50, 50, 50) # turn deleted character gray again
@@ -255,7 +287,10 @@ def write_char(hand, target):
                     output_msg = output_msg[:-1]
                     line_pos_x[0] -= 30
                     line_pos_x[1] -= 30
+                    entered_chars -= 1
+                    deleted_chars += 1
                     playsound("soundFX/key_press_delete.caf")
+                    
                 except KeyError:
                     pass
     
@@ -283,22 +318,19 @@ def vector(t1, t2):
     z = t2[2] - t1[2]
     return (x, y, z)
 
-# def reset():
-#     input_sequence = []
-#     output_msg = ""
-#     phrase_chars = {}
-#     word_preview = ""
-#     line_pos_x = [400, 430]
-    
+iterations = 0
 while True:
+    if frame == 0: #get start time with one time while loop
+        start_unix_time = time.time()
+        start_time = datetime.datetime.now().strftime("%H:%M:%S.%f")
     frame += 1
     success, img = videoCap.read() #reading image
     # img = cv2.flip(img, 1) #mirror image
     # img = cv2.flip(img, -1) #flip image in both directions
     
     # UI
-    cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1) #draw rectangle for text
-    # cv2.putText(img, test_phrase, (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2) #put test phrase on image
+    cv2.rectangle(img, (200,790), (1720,890), (255,255,255), -1) #draw rectangle for test phrase
+    cv2.rectangle(img, (200,900), (1720,1000), (255,255,255), -1) #draw rectangle for text
     
     # PIL handover for text on image
     cv2_img_rgb = cv2.cvtColor(img,cv2.COLOR_BGR2RGB) 
@@ -308,14 +340,14 @@ while True:
     finger_font = ImageFont.truetype("fonts/AtkinsonHyperlegible-Regular.ttf", 30) # accessible font for finger annotations
     # draw.text((400, 790), test_phrase, font=font, fill=(0, 0, 0)) # display test phrase on image
     for char in phrase_chars.values():
-        draw.text(((400 + char[0]), 790), char[1], font=font, fill=char[2])
+        draw.text(((400 + char[0]), 810), char[1], font=font, fill=char[2])
     try:
-        draw.text(((400 + (test_phrase_whitespace[completed_words]*30)), 890), word_preview, font=font, fill=(105, 105, 105))
+        draw.text(((400 + (test_phrase_whitespace[completed_words]*30)), 910), word_preview, font=font, fill=(105, 105, 105))
     except IndexError:
         pass
-    draw.text(((400), 890), output_msg, font=font, fill=(0, 0, 0))
+    draw.text(((400), 910), output_msg, font=font, fill=(0, 0, 0))
     cv2_img_processed = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR) 
-    cv2.line(cv2_img_processed,(line_pos_x[0], 960),(line_pos_x[1], 960),(105,105,105),5)
+    cv2.line(cv2_img_processed,(line_pos_x[0], 980),(line_pos_x[1], 980),(105,105,105),5)
     
     #fps calculations
     thisFrameTime = time.time()
@@ -325,9 +357,6 @@ while True:
         (20, 70),
         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
-    #wpm calculations
-    # TODO: Implement wpm calculations
-    wpm = 0
     cv2.putText(cv2_img_processed, f'FPS:{int(fps)}',
         (20, 70),
         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
@@ -367,10 +396,11 @@ while True:
                     input_sequence = []
                     output_msg = ""
                     word_preview = ""
-                    line_pos_x = [400, 430]
+                    line_pos_x = [400, 450]
                     for char in phrase_chars:
                         phrase_chars[char][2] = (0, 0, 0)
                     cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                    # TODO: add action based data point
                     print("Input message cleared")
                     playsound("soundFX/keyboard_press_clear.caf")
                     time.sleep(0.1)
@@ -391,31 +421,33 @@ while True:
 
                 # draw.text((int(landmark_pos[0]), int(landmark_pos[1])), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
                 # draw.text((100, 100), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
-                cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2)
-                
-                
-                # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
-                # TODO: OR: Only allow characters that are child nodes of chars in input_sequence
+                cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
                 
                 # INFO: detect pinch gesture
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
                     if word_completed():
                         word_preview = ""
-                    if len(input_sequence) >= len(test_phrase): # if input message is as long as test phrase, check if correct                 
-                        with open("phrases/phrases2.txt", "r") as f:
-                            phrases = f.readlines()
-                            test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
-                        test_phrase_words = test_phrase.split(" ")
-                        completed_words = 0
-                        input_sequence = []
-                        output_msg = ""
-                        phrase_chars = {}
-                        word_preview = ""
-                        line_pos_x = [400, 430]
-                        test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
-                        for idx, symbol in enumerate(test_phrase):
-                            phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
+                    if len(input_sequence) >= len(test_phrase): # if input message is as long as test phrase, check if correct    
+                        iterations += 1
+                        typed_sentences += 1
+                        if iterations <= 2:             
+                            with open("phrases/phrases2_for_autocomplete.txt", "r") as f:
+                                phrases = f.readlines()
+                                test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
+                            shown_sentences += 1
+                            shown_characters += len(test_phrase)
+                            test_phrase_words = test_phrase.split(" ")
+                            completed_words = 0
+                            input_sequence = []
+                            output_msg = ""
+                            phrase_chars = {}
+                            word_preview = ""
+                            line_pos_x = [400, 430]
+                            test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
+                            for idx, symbol in enumerate(test_phrase):
+                                phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
+                        
 
                     
                 elif distance(thumb_top, landmark_pos) <= 70 and char_written:
@@ -424,6 +456,34 @@ while True:
                 elif distance(thumb_top, landmark_pos) > 120 and char_written(hand_label, idx):
                     CHAR_DICT[hand_label][idx][1] = False
 
-
     cv2.imshow("Cam Output", cv2_img_processed)
-    cv2.waitKey(1)       
+    k = cv2.waitKey(1) & 0xFF
+    # print("key number: ", k)
+    if k == 27 or iterations == 3: # close window on ESC or when finished
+        ############################## SAVE DATA ########################################
+        end_unix_time = time.time()
+        end_time = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        general_data = {"start unix time": start_unix_time,
+                        "start time": start_time,
+                        "end time": end_time,
+                        "end unix time": end_unix_time,
+                        "shown sentences": shown_sentences,
+                        "shown characters": shown_characters,
+                        "key strokes": key_strokes,
+                        "entered chars": entered_chars,
+                        "deleted chars": deleted_chars,
+                        "typed words": typed_words,
+                        "typed sentences": typed_sentences,
+                        }
+        # print("keys: ", list(general_data.keys()))
+        # print("values: ", list(general_data.values()))
+        
+        print("----------saved general data----------")        
+        general_data_series = pd.Series(general_data)
+        print(action_based_df)
+        print(general_data_series)
+        
+        cv2.destroyAllWindows()
+        break
+    
+     
