@@ -9,33 +9,35 @@ from trie import Trie, TrieNode
 import math
 from playsound import playsound
 import pandas as pd
+import os
+from openpyxl import load_workbook
 
-# TODO: Candidate Selection based on word appearance frequency
-# TODO: change false character in test phrase to first of input message
+part_num = 0
 
-# Palm facing mental model 
-CHAR_DICT = {"Right": {
-    			0: ["qwert", False],
-                1: ["asdf", False],
-                2: ["zxc", False],
-                3: ["SPACE", False]},
-       		"Left": {
-             	0: ["yuiop", False],
-                1: ["ghjkl", False],
-                2: ["vbnm", False],
-                3: ["<-", False]}}
-
-# #allcaps chars
+# # QWERTY - Palm facing mental model (note that left/right switched)
 # CHAR_DICT = {"Right": {
-#     			0: ["QWERT", False],
-#                 1: ["ASDF", False],
-#                 2: ["ZXC", False],
+#     			0: ["qwert", False],
+#                 1: ["asdf", False],
+#                 2: ["zxc", False],
 #                 3: ["SPACE", False]},
 #        		"Left": {
-#              	0: ["YUIOP", False],
-#                 1: ["GHJKL", False],
-#                 2: ["VBNM", False],
+#              	0: ["yuiop", False],
+#                 1: ["ghjkl", False],
+#                 2: ["vbnm", False],
 #                 3: ["<-", False]}}
+
+# OPTI - Palm facing mental model (note that left/right switched)
+CHAR_DICT = {"Right": {
+    			0: ["dcumf", False],
+                1: ["pgwtb", False],
+                2: ["jqz", False],
+                3: ["SPACE", False]},
+       		"Left": {
+             	0: ["etaoi", False],
+                1: ["nsrhl", False],
+                2: ["vkx", False],
+                3: ["<-", False]}}
+
 
 # LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
 # populate language with every word from phrase
@@ -85,7 +87,8 @@ typed_words = 0
 key_strokes = 0
 entered_chars = 0
 deleted_chars = 0
-action_based_df = pd.DataFrame(columns=["time", "timestamp", "phrase", "word", "to type", "typed key", ])
+action_based_data = {"time": [], "timestamp": [], "action": [], "phrase": [], "word": [], "to type": [], "typed key": []}
+action_based_df = pd.DataFrame(columns=["time", "timestamp", "action", "phrase", "word", "to type", "typed key", ])
 
 
 line_pos_x = [400, 430]
@@ -123,7 +126,7 @@ def slice_at_blankspace(input_sequence):
             blankspace_indices = [i for i, char in enumerate(input_sequence) if char == ' '] # save the index of every blankspace in input sequence
             return input_sequence[blankspace_indices[-1]+1:] 
         except IndexError or TypeError:
-            pass
+            return input_sequence
     else:
         return input_sequence
 
@@ -135,17 +138,20 @@ def write_char(hand, target):
     global entered_chars
     global deleted_chars
     global action_based_df
+    global action_based_data
+    
     # data collection metrics
     key_strokes += 1
     action_based_data = {"time": [datetime.datetime.now().strftime("%H:%M:%S.%f")],
                          "timestamp": [time.time()],
+                         "action": [],
                         "phrase": [test_phrase],
                         "word": [test_phrase_words[completed_words]],
                         "to type": [test_phrase[len(input_sequence)]],
                         "typed key": [CHAR_DICT[hand][target][0]],
-                        
                         }
-    action_based_df = pd.concat([action_based_df, pd.DataFrame.from_dict(action_based_data)], ignore_index=True)
+    
+    print("Input Sequence on write_char() : ", input_sequence)
     
     if not target == 3: #pinky
         input_sequence.append(CHAR_DICT[hand][target][0])
@@ -158,6 +164,7 @@ def write_char(hand, target):
         line_pos_x[1] += 30
         CHAR_DICT[hand][target][1] = True
         entered_chars += 1
+        action_based_data.update({"action": ["type character"]})
         if len(input_sequence) >= 0: # coloring displayed sentence and soundFX when user types
             try:
                 if test_phrase[len(input_sequence)-1] in input_sequence[len(input_sequence)-1]:
@@ -172,29 +179,26 @@ def write_char(hand, target):
 ################################################### SELF TYPING #########################################################
 
 
-        print(f"TRIE LIST: {trie_list}")
+        # print(f"TRIE LIST: {trie_list}")
         if trie_list == []: # if no candidates are found, add first character of character group to output message
             output_msg += input_sequence[-1][0]
             word_preview = ""
             print("OUTPUT MSG NO TRIE LIST: " + output_msg)
         else:
-            # if test_phrase_words[completed_words] in trie_list[:3]: #simulating a 3-fold candidate selection
-            if len(trie_list) == 1:
-                word_preview_found = True
-                word_preview = trie_list[0]
-                print("TRUE WORD PREVIEW: " + word_preview)
-            # TODO: select correct word
-            # FIXME: always display word preview when available for testing without autocompletion
-            elif test_phrase_words[completed_words] == trie_list[-3:]: # for edge cases with abiguous candidates
-                word_preview_found = True
+            if test_phrase_words[completed_words] in trie_list:
                 word_preview = test_phrase_words[completed_words]
-                print("TRUE WORD PREVIEW: " + word_preview)
-            elif test_phrase_words[completed_words] in trie_list[:len(trie_list)//2]: # workaround for candidate selection
-                word_preview_found = True
-                word_preview = test_phrase_words[completed_words]
-                print("TRUE WORD PREVIEW: " + word_preview)
+            # if len(trie_list) == 1:
+            #     word_preview = trie_list[0]
+            #     print("TRUE WORD PREVIEW: " + word_preview)
+            # # TODO: select correct word
+            # # FIXME: always display word preview when available for testing without autocompletion
+            # elif test_phrase_words[completed_words] == trie_list[-3:]: # for edge cases with abiguous candidates
+            #     word_preview = test_phrase_words[completed_words]
+            #     print("TRUE WORD PREVIEW: " + word_preview)
+            # elif test_phrase_words[completed_words] in trie_list[:len(trie_list)//2]: # workaround for candidate selection
+            #     word_preview = test_phrase_words[completed_words]
+            #     print("TRUE WORD PREVIEW: " + word_preview)
             else:
-                word_preview_found = False
                 word_preview = trie_list[0]
                 print("FALSE WORD PREVIEW: " + word_preview)
                 
@@ -252,10 +256,12 @@ def write_char(hand, target):
                 line_pos_x[0] += 30
                 line_pos_x[1] += 30
                 entered_chars += 1
+                action_based_data.update({"action": ["spacebar"]})
                 playsound("soundFX/key_press_click.caf")
                 CHAR_DICT[hand][target][1] = True
             case "Left": # delete last character
                 CHAR_DICT[hand][target][1] = True
+                action_based_data.update({"action": ["delete"]})
                 try:
                     phrase_chars[len(input_sequence)-1][2] = (50, 50, 50) # turn deleted character gray again
                     input_sequence = input_sequence[:-1]
@@ -267,18 +273,9 @@ def write_char(hand, target):
                     playsound("soundFX/key_press_delete.caf")
                 except KeyError:
                     pass
-    
-    # # print child nodes of current char in trie
-    # for char in CHAR_DICT[hand_label][idx]:
-    #     print(f"Tree children: {trie.children(char)}")
-    
-    # # autocompletion
-    # result = list(trie.complete(input_sequence)) # get list of possible words
-    # if len(result) == 1:    # if there is only one result, autocomplete
-    #     output_msg += result[0] + " "
-    #     print(output_msg)
-    #     input_sequence = []
-    # # time.sleep(0.1)
+    print("----------write action based data----------")
+    print(action_based_data)
+    action_based_df = pd.concat([action_based_df, pd.DataFrame.from_dict(action_based_data)], ignore_index=True) # add action based data to dataframe
 
 def char_written(hand, target):
     if CHAR_DICT[hand][target][1] == False:
@@ -375,7 +372,12 @@ while True:
                     for char in phrase_chars:
                         phrase_chars[char][2] = (0, 0, 0)
                     cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    # TODO: add action based data point
+                    # TODO: check implementation of action based data collection
+                    print("----------write action based data----------")
+                    print("abd before 'clear' update: ", action_based_data)  
+                    action_based_data.update({"action": ["clear"]})
+                    print("abd after 'clear' update: ", action_based_data)
+                    action_based_df = pd.concat([action_based_df, pd.DataFrame.from_dict(action_based_data)], ignore_index=True) # add action based data to dataframe
                     print("Input message cleared")
                     playsound("soundFX/keyboard_press_clear.caf")
                     time.sleep(0.1)
@@ -399,30 +401,30 @@ while True:
                 cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
                 
                 
-                # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
-                # TODO: OR: Only allow characters that are child nodes of chars in input_sequence
-                
                 # INFO: detect pinch gesture
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
                     if word_completed():
                         word_preview = ""
-                    if len(input_sequence) >= len(test_phrase): # if input message is as long as test phrase, check if correct                 
-                        with open("phrases/phrases2.txt", "r") as f:
-                            phrases = f.readlines()
-                            test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
-                        shown_sentences += 1
-                        shown_characters += len(test_phrase)
-                        test_phrase_words = test_phrase.split(" ")
-                        completed_words = 0
-                        input_sequence = []
-                        output_msg = ""
-                        phrase_chars = {}
-                        word_preview = ""
-                        line_pos_x = [400, 430]
-                        test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
-                        for idx, symbol in enumerate(test_phrase):
-                            phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
+                    if len(input_sequence) >= len(test_phrase): # if input message is as long as test phrase, check if correct    
+                        iterations += 1
+                        typed_sentences += 1
+                        if iterations <=2:           
+                            with open("phrases/phrases2.txt", "r") as f:
+                                phrases = f.readlines()
+                                test_phrase = phrases[np.random.randint(0, len(phrases))].strip()
+                            shown_sentences += 1
+                            shown_characters += len(test_phrase)
+                            test_phrase_words = test_phrase.split(" ")
+                            completed_words = 0
+                            input_sequence = []
+                            output_msg = ""
+                            phrase_chars = {}
+                            word_preview = ""
+                            line_pos_x = [400, 430]
+                            test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
+                            for idx, symbol in enumerate(test_phrase):
+                                phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
 
                     
                 elif distance(thumb_top, landmark_pos) <= 70 and char_written:
@@ -454,10 +456,28 @@ while True:
         # print("keys: ", list(general_data.keys()))
         # print("values: ", list(general_data.values()))
         
-        print("----------saved general data----------")        
+        print("----------write general data----------")        
         general_data_series = pd.Series(general_data)
+        
+        # TODO: test if data is saved correctly
+        if general_data["typed sentences"] >= 2:
+            action_based_df.to_csv("data/action_based_data.csv")
+            general_data_series.to_csv("data/general_data.csv")
+            with pd.ExcelWriter("data/general_data.xlsx") as writer:
+                general_data_series.to_excel(writer, sheet_name=f"Participant {part_num}")
+            with pd.ExcelWriter("data/action_based_data.xlsx") as writer:
+                action_based_df.to_excel(writer, sheet_name=f"Participant {part_num}")
+            print("----------data saved----------")
+        
         print(action_based_df)
         print(general_data_series)
+        
+        cps = key_strokes / round((end_unix_time - start_unix_time),2)
+        wpm = cps * 60 / 5
+        kspc = key_strokes / entered_chars
+        print("----------performance----------")
+        print("WPM: ", wpm)
+        print("KSPC: ", kspc)
         
         cv2.destroyAllWindows()
         break     
