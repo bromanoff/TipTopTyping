@@ -9,8 +9,6 @@ from trie import Trie, TrieNode
 import math
 from playsound import playsound
 import pandas as pd
-import os
-from openpyxl import load_workbook
 
 part_num = 0
 
@@ -372,7 +370,7 @@ while True:
                     for char in phrase_chars:
                         phrase_chars[char][2] = (0, 0, 0)
                     cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    # TODO: check implementation of action based data collection
+                    
                     print("----------write action based data----------")
                     print("abd before 'clear' update: ", action_based_data)  
                     action_based_data.update({"action": ["clear"]})
@@ -459,20 +457,19 @@ while True:
         print("----------write general data----------")        
         general_data_series = pd.Series(general_data)
         
-        # TODO: test if data is saved correctly
         if general_data["typed sentences"] >= 2:
             action_based_df.to_csv("data/action_based_data.csv")
             general_data_series.to_csv("data/general_data.csv")
-            with pd.ExcelWriter("data/general_data.xlsx") as writer:
+            with pd.ExcelWriter("data/general_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="new") as writer:
                 general_data_series.to_excel(writer, sheet_name=f"Participant {part_num}")
-            with pd.ExcelWriter("data/action_based_data.xlsx") as writer:
+            with pd.ExcelWriter("data/action_based_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="new") as writer:
                 action_based_df.to_excel(writer, sheet_name=f"Participant {part_num}")
             print("----------data saved----------")
         
         print(action_based_df)
         print(general_data_series)
         
-        cps = key_strokes / round((end_unix_time - start_unix_time),2)
+        cps = entered_chars / round((end_unix_time - start_unix_time),2)
         wpm = cps * 60 / 5
         kspc = key_strokes / entered_chars
         print("----------performance----------")

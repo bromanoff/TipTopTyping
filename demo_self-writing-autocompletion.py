@@ -480,18 +480,18 @@ while True:
         general_data_series = pd.Series(general_data)
         
         if general_data["typed sentences"] >= 2:
-            action_based_df.to_csv("data/action_based_data.csv")
-            general_data_series.to_csv("data/general_data.csv")
-            with pd.ExcelWriter("data/AC_general_data.xlsx") as writer:
+            action_based_df.to_csv("data/AC_action_based_data.csv")
+            general_data_series.to_csv("data/AC_general_data.csv")
+            with pd.ExcelWriter("data/AC_general_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="new") as writer:
                 general_data_series.to_excel(writer, sheet_name=f"Participant {part_num}")
-            with pd.ExcelWriter("data/AC_action_based_data.xlsx") as writer:
+            with pd.ExcelWriter("data/AC_action_based_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="new") as writer:
                 action_based_df.to_excel(writer, sheet_name=f"Participant {part_num}")
             print("----------data saved----------")
         
         print(action_based_df)
         print(general_data_series)
         
-        cps = key_strokes / round((end_unix_time - start_unix_time),2)
+        cps = entered_chars / round((end_unix_time - start_unix_time),2)
         wpm = cps * 60 / 5
         kspc = key_strokes / entered_chars
         print("----------performance----------")
