@@ -10,32 +10,32 @@ import math
 from playsound import playsound
 import pandas as pd
 
-part_num = 1
+part_num = 2
 
 # QWERTY - Palm facing mental model (note that left/right are switched)
 CHAR_GROUPS = ["asdf", "qwert", "zxc", "yuiop", "ghjkl", "vbnm"]
 
-CHAR_DICT = {"Right": {
-    			0: ["qwert", False],
-                1: ["asdf", False],
-                2: ["zxc", False],
-                3: ["SPACE", False]},
-       		"Left": {
-             	0: ["yuiop", False],
-                1: ["ghjkl", False],
-                2: ["vbnm", False],
-                3: ["<-", False]}}
-
 # CHAR_DICT = {"Right": {
-#     			0: ["dcumf", False],
-#                 1: ["pgwtb", False],
-#                 2: ["jqz", False],
+#     			0: ["qwert", False],
+#                 1: ["asdf", False],
+#                 2: ["zxc", False],
 #                 3: ["SPACE", False]},
 #        		"Left": {
-#              	0: ["etaoi", False],
-#                 1: ["nsrhl", False],
-#                 2: ["vkx", False],
+#              	0: ["yuiop", False],
+#                 1: ["ghjkl", False],
+#                 2: ["vbnm", False],
 #                 3: ["<-", False]}}
+
+CHAR_DICT = {"Right": {
+    			0: ["dcumf", False],
+                1: ["pgwyb", False],
+                2: ["jqz", False],
+                3: ["SPACE", False]},
+       		"Left": {
+             	0: ["etaoi", False],
+                1: ["nsrhl", False],
+                2: ["vkx", False],
+                3: ["<-", False]}}
 
 # LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
 
@@ -382,28 +382,28 @@ while True:
             thumb_vector = (thumb_vector[0] * 0.3, thumb_vector[1] * 0.3, thumb_vector[2] * 0.3) # scale vector
             thumb_top = ((thumb_tip_3d[0] + thumb_vector[0]), (thumb_tip_3d[1] + thumb_vector[1]), (thumb_tip_3d[2] + thumb_vector[2]))
             
-            # Reset input message when pinky tips touch
-            if hand_label == "Left":
-                left_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
-            if hand_label == "Right":
-                right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
+            # TODO: Disable for study
+            # # Reset input message when pinky tips touch
+            # if hand_label == "Left":
+            #     left_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
+            # if hand_label == "Right":
+            #     right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
             
-            try: #exception handling for first iteration with uncomputed right pinky tip
-                if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20 and not input_sequence == []:
-                    completed_words = 0
-                    input_sequence = []
-                    output_msg = ""
-                    word_preview = ""
-                    line_pos_x = [400, 450]
-                    for char in phrase_chars:
-                        phrase_chars[char][2] = (0, 0, 0)
-                    cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    # TODO: add action based data point
-                    print("Input message cleared")
-                    playsound("soundFX/keyboard_press_clear.caf")
-                    time.sleep(0.1)
-            except NameError:
-                continue
+            # try: #exception handling for first iteration with uncomputed right pinky tip
+            #     if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20 and not input_sequence == []:
+            #         completed_words = 0
+            #         input_sequence = []
+            #         output_msg = ""
+            #         word_preview = ""
+            #         line_pos_x = [400, 450]
+            #         for char in phrase_chars:
+            #             phrase_chars[char][2] = (0, 0, 0)
+            #         cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            #         print("Input message cleared")
+            #         playsound("soundFX/keyboard_press_clear.caf")
+            #         time.sleep(0.1)
+            # except NameError:
+            #     continue
             
             
             # Thumb Annotations

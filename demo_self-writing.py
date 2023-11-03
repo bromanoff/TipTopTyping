@@ -10,7 +10,7 @@ import math
 from playsound import playsound
 import pandas as pd
 
-part_num = 0
+part_num = 3
 
 # # QWERTY - Palm facing mental model (note that left/right switched)
 # CHAR_DICT = {"Right": {
@@ -27,7 +27,7 @@ part_num = 0
 # OPTI - Palm facing mental model (note that left/right switched)
 CHAR_DICT = {"Right": {
     			0: ["dcumf", False],
-                1: ["pgwtb", False],
+                1: ["pgwyb", False],
                 2: ["jqz", False],
                 3: ["SPACE", False]},
        		"Left": {
@@ -62,7 +62,7 @@ print("test phrase words: ", test_phrase_words)
 
 phrase_chars = {}
 for idx, symbol in enumerate(test_phrase):
-    phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
+    phrase_chars[idx] = [idx * 30, symbol, (70, 70, 70)]
     
 # Trie Datastruture to store and query language
 trie = Trie()
@@ -261,7 +261,7 @@ def write_char(hand, target):
                 CHAR_DICT[hand][target][1] = True
                 action_based_data.update({"action": ["delete"]})
                 try:
-                    phrase_chars[len(input_sequence)-1][2] = (50, 50, 50) # turn deleted character gray again
+                    phrase_chars[len(input_sequence)-1][2] = (70, 70, 70) # turn deleted character gray again
                     input_sequence = input_sequence[:-1]
                     output_msg = output_msg[:-1]
                     line_pos_x[0] -= 30
@@ -296,6 +296,7 @@ while True:
     success, img = videoCap.read() #reading image
     # img = cv2.flip(img, 1) #mirror image
     # img = cv2.flip(img, -1) #flip image in both directions
+    # print window x,y coordinates
     
     # UI
     cv2.rectangle(img, (200,790), (1720,890), (255,255,255), -1) #draw rectangle for test phrase
@@ -422,7 +423,7 @@ while True:
                             line_pos_x = [400, 430]
                             test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
                             for idx, symbol in enumerate(test_phrase):
-                                phrase_chars[idx] = [idx * 30, symbol, (50, 50, 50)]
+                                phrase_chars[idx] = [idx * 30, symbol, (70, 70, 70)]
 
                     
                 elif distance(thumb_top, landmark_pos) <= 70 and char_written:
@@ -433,6 +434,12 @@ while True:
 
 
     cv2.imshow("Cam Output", cv2_img_processed)
+    # print("window x,y coordinates: ", cv2.getWindowImageRect("Cam Output")) # perfect window coordinates: (-1886, 2420, 1920, 1080)
+    if frame == 2: #image repositioning
+        # pass
+        cv2.moveWindow("Cam Output", 0,-700)
+        cv2.moveWindow("Cam Output", -950,-700)
+        
     k = cv2.waitKey(1) & 0xFF
     # print("key number: ", k)
     if k == 27 or iterations == 3: # close window on ESC or when finished
