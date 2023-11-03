@@ -10,7 +10,10 @@ import math
 from playsound import playsound
 import pandas as pd
 
-part_num = 3
+part_info = {"participant": 1,
+             "iteration": 2,
+             "condition": "OS",            
+            }
 
 # # QWERTY - Palm facing mental model (note that left/right switched)
 # CHAR_DICT = {"Right": {
@@ -62,7 +65,7 @@ print("test phrase words: ", test_phrase_words)
 
 phrase_chars = {}
 for idx, symbol in enumerate(test_phrase):
-    phrase_chars[idx] = [idx * 30, symbol, (70, 70, 70)]
+    phrase_chars[idx] = [idx * 30, symbol, (100, 100, 100)]
     
 # Trie Datastruture to store and query language
 trie = Trie()
@@ -261,7 +264,7 @@ def write_char(hand, target):
                 CHAR_DICT[hand][target][1] = True
                 action_based_data.update({"action": ["delete"]})
                 try:
-                    phrase_chars[len(input_sequence)-1][2] = (70, 70, 70) # turn deleted character gray again
+                    phrase_chars[len(input_sequence)-1][2] = (100, 100, 100) # turn deleted character gray again
                     input_sequence = input_sequence[:-1]
                     output_msg = output_msg[:-1]
                     line_pos_x[0] -= 30
@@ -355,33 +358,34 @@ while True:
             thumb_vector = (thumb_vector[0] * 0.3, thumb_vector[1] * 0.3, thumb_vector[2] * 0.3) # scale vector
             thumb_top = ((thumb_tip_3d[0] + thumb_vector[0]), (thumb_tip_3d[1] + thumb_vector[1]), (thumb_tip_3d[2] + thumb_vector[2]))
             
-            # Reset input message when pinky tips touch
-            if hand_label == "Left":
-                left_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
-            if hand_label == "Right":
-                right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
+            # DEATIVATED RESET FUNCTION FOR STUDY
+            # # Reset input message when pinky tips touch
+            # if hand_label == "Left":
+            #     left_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
+            # if hand_label == "Right":
+            #     right_pinky_tip_pos = ((hand_landmarks.landmark[20].x * width), (hand_landmarks.landmark[20].y * height))
             
-            try: #exception handling for first iteration with uncomputed right pinky tip
-                if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20 and not input_sequence == []:
-                    completed_words = 0
-                    input_sequence = []
-                    output_msg = ""
-                    word_preview = ""
-                    line_pos_x = [400, 450]
-                    for char in phrase_chars:
-                        phrase_chars[char][2] = (0, 0, 0)
-                    cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            # try: #exception handling for first iteration with uncomputed right pinky tip
+            #     if distance(left_pinky_tip_pos, right_pinky_tip_pos) <= 20 and not input_sequence == []:
+            #         completed_words = 0
+            #         input_sequence = []
+            #         output_msg = ""
+            #         word_preview = ""
+            #         line_pos_x = [400, 450]
+            #         for char in phrase_chars:
+            #             phrase_chars[char][2] = (0, 0, 0)
+            #         cv2.putText(cv2_img_processed, "Input message cleared", (800, 1030), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
                     
-                    print("----------write action based data----------")
-                    print("abd before 'clear' update: ", action_based_data)  
-                    action_based_data.update({"action": ["clear"]})
-                    print("abd after 'clear' update: ", action_based_data)
-                    action_based_df = pd.concat([action_based_df, pd.DataFrame.from_dict(action_based_data)], ignore_index=True) # add action based data to dataframe
-                    print("Input message cleared")
-                    playsound("soundFX/keyboard_press_clear.caf")
-                    time.sleep(0.1)
-            except NameError:
-                continue
+            #         print("----------write action based data----------")
+            #         print("abd before 'clear' update: ", action_based_data)  
+            #         action_based_data.update({"action": ["clear"]})
+            #         print("abd after 'clear' update: ", action_based_data)
+            #         action_based_df = pd.concat([action_based_df, pd.DataFrame.from_dict(action_based_data)], ignore_index=True) # add action based data to dataframe
+            #         print("Input message cleared")
+            #         playsound("soundFX/keyboard_press_clear.caf")
+            #         time.sleep(0.1)
+            # except NameError:
+            #     continue
             
             
             # Thumb Annotations
@@ -423,7 +427,7 @@ while True:
                             line_pos_x = [400, 430]
                             test_phrase_whitespace = calculate_phrase_whitespace(test_phrase)
                             for idx, symbol in enumerate(test_phrase):
-                                phrase_chars[idx] = [idx * 30, symbol, (70, 70, 70)]
+                                phrase_chars[idx] = [idx * 30, symbol, (100, 100, 100)]
 
                     
                 elif distance(thumb_top, landmark_pos) <= 70 and char_written:
@@ -467,10 +471,10 @@ while True:
         if general_data["typed sentences"] >= 2:
             action_based_df.to_csv("data/action_based_data.csv")
             general_data_series.to_csv("data/general_data.csv")
-            with pd.ExcelWriter("data/general_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="new") as writer:
-                general_data_series.to_excel(writer, sheet_name=f"Participant {part_num}")
-            with pd.ExcelWriter("data/action_based_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="new") as writer:
-                action_based_df.to_excel(writer, sheet_name=f"Participant {part_num}")
+            with pd.ExcelWriter("data/general_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
+                general_data_series.to_excel(writer, sheet_name=f"P{part_info['participant']}", header=[part_info["condition"]], startcol=(part_info["iteration"]*2))
+            with pd.ExcelWriter("data/action_based_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
+                action_based_df.to_excel(writer, sheet_name=f"P{part_info['participant']}", startcol=(part_info["iteration"]*7))
             print("----------data saved----------")
         
         print(action_based_df)
