@@ -324,7 +324,7 @@ while True:
     frame += 1
     success, img = videoCap.read() #reading image
     # img = cv2.flip(img, 1) #mirror image
-    # img = cv2.flip(img, -1) #flip image in both directions
+    img = cv2.flip(img, -1) #flip image in both directions
     
     # UI
     cv2.rectangle(img, (200,790), (1720,890), (255,255,255), -1) #draw rectangle for test phrase

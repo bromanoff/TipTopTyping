@@ -10,34 +10,34 @@ import math
 from playsound import playsound
 import pandas as pd
 
-part_info = {"participant": 1,
-             "iteration": 2,
-             "condition": "OS",            
+part_info = {"participant": 8,
+             "iteration": 4,
+             "condition": "QW",
             }
 
 # # QWERTY - Palm facing mental model (note that left/right switched)
-# CHAR_DICT = {"Right": {
-#     			0: ["qwert", False],
-#                 1: ["asdf", False],
-#                 2: ["zxc", False],
-#                 3: ["SPACE", False]},
-#        		"Left": {
-#              	0: ["yuiop", False],
-#                 1: ["ghjkl", False],
-#                 2: ["vbnm", False],
-#                 3: ["<-", False]}}
-
-# OPTI - Palm facing mental model (note that left/right switched)
 CHAR_DICT = {"Right": {
-    			0: ["dcumf", False],
-                1: ["pgwyb", False],
-                2: ["jqz", False],
+    			0: ["qwert", False],
+                1: ["asdf", False],
+                2: ["zxc", False],
                 3: ["SPACE", False]},
        		"Left": {
-             	0: ["etaoi", False],
-                1: ["nsrhl", False],
-                2: ["vkx", False],
+             	0: ["yuiop", False],
+                1: ["ghjkl", False],
+                2: ["vbnm", False],
                 3: ["<-", False]}}
+
+# OPTI - Palm facing mental model (note that left/right switched)
+# CHAR_DICT = {"Right": {
+#     			0: ["dcumf", False],
+#                 1: ["pgwyb", False],
+#                 2: ["jqz", False],
+#                 3: ["SPACE", False]},
+#        		"Left": {
+#              	0: ["etaoi", False],
+#                 1: ["nsrhl", False],
+#                 2: ["vkx", False],
+#                 3: ["<-", False]}}
 
 
 # LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
@@ -298,7 +298,7 @@ while True:
     frame += 1
     success, img = videoCap.read() #reading image
     # img = cv2.flip(img, 1) #mirror image
-    # img = cv2.flip(img, -1) #flip image in both directions
+    img = cv2.flip(img, -1) #flip image in both directions
     # print window x,y coordinates
     
     # UI
@@ -469,12 +469,12 @@ while True:
         general_data_series = pd.Series(general_data)
         
         if general_data["typed sentences"] >= 2:
-            action_based_df.to_csv("data/action_based_data.csv")
-            general_data_series.to_csv("data/general_data.csv")
             with pd.ExcelWriter("data/general_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
                 general_data_series.to_excel(writer, sheet_name=f"P{part_info['participant']}", header=[part_info["condition"]], startcol=(part_info["iteration"]*2))
             with pd.ExcelWriter("data/action_based_data.xlsx", mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
-                action_based_df.to_excel(writer, sheet_name=f"P{part_info['participant']}", startcol=(part_info["iteration"]*7))
+                action_based_df.to_excel(writer, sheet_name=f"P{part_info['participant']}", startcol=(part_info["iteration"]*8))
+            action_based_df.to_csv(f"data/backup/{part_info['participant']}_action_based_data.csv", mode="a")
+            general_data_series.to_csv(f"data/backup/{part_info['participant']}_general_data.csv", mode="a", header=[part_info["condition"]])
             print("----------data saved----------")
         
         print(action_based_df)
