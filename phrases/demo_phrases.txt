@@ -1,0 +1,5 @@
+this is a demonstration of thumb to finger text input
+a method for writing text without a keyboard 
+this prototype uses a webcam and hand landmark detection
+the system could be used with wearable technologies
+or in situations with special requirements 

@@ -10,9 +10,9 @@ import math
 from playsound import playsound
 import pandas as pd
 
-part_info = {"participant": 8,
-             "iteration": 4,
-             "condition": "QW",
+part_info = {"participant": 0,
+             "iteration": 1,
+             "condition": "OS",
             }
 
 # # QWERTY - Palm facing mental model (note that left/right switched)
@@ -177,7 +177,7 @@ def write_char(hand, target):
             except KeyError:
                 pass
             
-################################################### SELF TYPING #########################################################
+################################################### PSEUDO SELF TYPING #########################################################
 
 
         # print(f"TRIE LIST: {trie_list}")
@@ -247,7 +247,7 @@ def write_char(hand, target):
                     
                         
     
-################################################## SELF TYPING ##########################################################
+################################################## END PSEUDO SELF TYPING ##########################################################
 
     else: # pinky inputs
         match hand:
@@ -316,7 +316,7 @@ while True:
     for char in phrase_chars.values():
         draw.text(((400 + char[0]), 810), char[1], font=font, fill=char[2])
     try:
-        draw.text(((400 + (test_phrase_whitespace[completed_words]*30)), 910), word_preview, font=font, fill=(105, 105, 105))
+        draw.text(((400 + (test_phrase_whitespace[completed_words]*30)), 910), word_preview, font=font, fill=(180, 180, 180)) # auto complete preview
     except IndexError:
         pass
     draw.text(((400), 910), output_msg, font=font, fill=(0, 0, 0))
