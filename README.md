@@ -73,5 +73,14 @@ Every participant reported and weighted their task load on a scale from 1 to 20 
 ### QWERTY vs. OPTI
 Participants were typing faster with QWERTY. The mean entry rate for OPTI was 5,67 words per minute (WPM), while users typed an average 6,14 WPM with QWERTY. This is approximately 8,3 % faster. However, typists using the OPTI layout made fewer keystrokes per character compared to using the QWERTY layout, meaning a higher accuracy for OPTI.
 
-![plots showing comparison of layout performances](/Figures/results_qwerty-vs-opti.png)
+![plots comparing performances between layouts](/Figures/results_qwerty-vs-opti.png)
+
+### Standing vs. Walking
+Walking has a negative effect on all three performance measures. A comparison between character layouts shows, that walking has a stronger negative effect on OPTI for accuracy and task load. 
+
+![plots comparing performances between mobility scenarios](/Figures/results_standing-vs-walking.png)
+
+Nevertheless, participants were doing less keystrokes per character across all conditions with OPTI and were able to increase their accuracy from first to second run with the layout.
+
+![plots comparing performances between consecutive trials](/Figures/results_consecutive-trials.png)
 
