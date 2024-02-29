@@ -38,7 +38,7 @@ CHAR_DICT = {"Right": {
                 2: ["vkx", False],
                 3: ["<-", False]}}
 
-# LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
+# LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"] # small test language
 
 LANGUAGE = []
 with open("phrases/demo_phrases.txt", "r") as file: # populate language with every word from demo_phrases.txt
@@ -175,10 +175,9 @@ def write_char(hand, target):
             except KeyError:
                 pass
             
-################################################### PSEUDO SELF TYPING #########################################################
+################################################### PSEUDO FREE TYPING #########################################################
 
-        # INFO: Self Typing logic
-        print(f"TRIE LIST: {trie_list}")
+        # print(f"TRIE LIST: {trie_list}")
         if trie_list == []: # if no candidates are found, add first character of character group to output message
             output_msg += input_sequence[-1][0]
             word_preview = ""
@@ -236,7 +235,7 @@ def write_char(hand, target):
                 print("OUTPUT CASE 2: " + output_msg)
                         
     
-################################################## END PSEUDO SELF TYPING ##########################################################
+################################################## END PSEUDO FREE TYPING ##########################################################
 
     else: # pinky inputs
         match hand:
@@ -325,6 +324,7 @@ while True:
     draw = ImageDraw.Draw(pil_img)  
     font = ImageFont.truetype("fonts/RobotoMono-Regular.ttf", 50) # use a truetype font 
     finger_font = ImageFont.truetype("fonts/AtkinsonHyperlegible-Regular.ttf", 30) # accessible font for finger annotations
+    
     # INFO: disabled test phrase display
     # draw.text((400, 790), test_phrase, font=font, fill=(0, 0, 0)) # display test phrase on image
     # for char in phrase_chars.values():
@@ -410,7 +410,7 @@ while True:
                 # draw.text((100, 100), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
                 cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
                 
-                # INFO: detect pinch gesture
+                # detect pinch gesture
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
                     if word_completed():

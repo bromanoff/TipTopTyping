@@ -40,14 +40,14 @@ CHAR_DICT = {"Right": {
 #                 3: ["<-", False]}}
 
 
-# LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"]
+# LANGUAGE = ["hut", "haus", "haut", "mut", "maus", "maut", "mann", "hello", "world", "test", "phrase"] # small test language
+
 # populate language with every word from phrase
 LANGUAGE = []
 with open("phrases/phrases2.txt", "r") as file:
     content_without_newlines = ''.join(file.readlines()).replace('\n', ' ')
     words = content_without_newlines.split(" ")
     LANGUAGE.extend(words)
-# print(LANGUAGE)
 
 # pull random phrase from phrases2.txt and save it in a variable
 with open("phrases/phrases2.txt", "r") as f:
@@ -58,8 +58,6 @@ shown_sentences = 1
 shown_characters = len(test_phrase)
     
 # test_phrase = "hello world test phrase"
-# test_phrase = "lost in translation"
-# test_phrase = "accompanied by an adult"
 test_phrase_words = test_phrase.split(" ")
 print("test phrase words: ", test_phrase_words)
 
@@ -177,7 +175,7 @@ def write_char(hand, target):
             except KeyError:
                 pass
             
-################################################### PSEUDO SELF TYPING #########################################################
+################################################### PSEUDO FREE TYPING #########################################################
 
 
         # print(f"TRIE LIST: {trie_list}")
@@ -214,40 +212,10 @@ def write_char(hand, target):
             else:
                 output_msg += input_sequence[-1][0]
                 print("OUTPUT CASE 2: " + output_msg)
-
-                
-            
-            # for char in input_sequence[-1]:                             # for character in last entered group (input_sequence[-1])
-            #     if char in test_phrase_words[completed_words][len(cut_input_sequence)-1]:         # if character is equal to character with same index in test phrase
-            #         # FIXME: fix word preview when flagged
-            #         if word_preview_found:                             # if word completion is only one character long
-            #             if output_msg in test_phrase:                   # if output message is equal to test phrase, pass
-            #                 pass
-            #             else:                                           # if output message is not equal to test phrase, correct output message
-            #                 try:
-            #                     output_msg += char 
-            #                     # print("output_msg BEFORE replacement: " + output_msg)
-            #                     # print("word_preview: " + word_preview)
-            #                     # print("replace:", output_msg[-(len(cut_input_sequence)):] + " with: " + word_preview[:len(cut_input_sequence)])
-            #                     output_msg = output_msg.replace(output_msg[-(len(cut_input_sequence)):], word_preview[:len(cut_input_sequence)]) # replace last entered group with word completion
-            #                     # print("output_msg AFTER replacement: " + output_msg)
-            #                     break
-            #                 except IndexError:
-            #                     pass
-            #         output_msg += char                              # add character to output message
-            #         word_preview_found = False
-            #         print("output_msg 1: " + output_msg)
-            #     #FIXME: Fix index error: list index out of range
-            #     else:
-            #         if char in word_preview[len(cut_input_sequence)-1]: # if character is equal to character with same index in word completion
-            #             output_msg += char                              # add character to output message
-            #             word_preview_found = False
-            #             print("output_msg 2: " + output_msg)
-            #             break
                     
                         
     
-################################################## END PSEUDO SELF TYPING ##########################################################
+################################################## END PSEUDO FREE TYPING ##########################################################
 
     else: # pinky inputs
         match hand:

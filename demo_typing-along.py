@@ -11,6 +11,9 @@ from playsound import playsound
 
 # TODO: Candidate Selection based on word appearance frequency
 # TODO: change false character in test phrase to first of input message
+# TODO: display first char of entered group as user types
+# TODO: display first candidate as word extension 
+# TODO: implement candidate selection on space
 
 # Palm facing mental model 
 CHAR_DICT = {"Right": {
@@ -85,16 +88,6 @@ def write_char(hand, target):
                 phrase_chars[len(input_msg)-1][2] = (255, 0, 0)
                 playsound("/Users/romanbeier/Documents/Education/Master/TU Wien/04-Master-SoSe23/Masterthesis/Code/tip-top-typing/soundFX/keyboard_press_normal.caf")
 
-############################################################################################################
-
-    # TODO: display first char of entered group as user types
-    # TODO: display first candidate as word extension 
-    # TODO: implement candidate selection on space
-
-        print(list(trie.complete(input_msg)))
-    
-############################################################################################################
-
     else:
         match hand:
             case "Right":
@@ -118,10 +111,6 @@ def write_char(hand, target):
                 
 
     print(f"Input Message: {input_msg}")
-    
-    # # print child nodes of current char in trie
-    # for char in CHAR_DICT[hand_label][idx]:
-    #     print(f"Tree children: {trie.children(char)}")
     
     # # autocompletion
     # result = list(trie.complete(input_msg)) # get list of possible words
@@ -156,7 +145,7 @@ while True:
     # img = cv2.flip(img, -1) #flip image in both directions
     
     # UI
-    cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1) #draw rectangle for text
+    cv2.rectangle(img, (200,880), (1720,980), (255,255,255), -1) # draw rectangle for text
     # cv2.putText(img, test_phrase, (400, 940), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2) #put test phrase on image
     
     # PIL handover for text on image
@@ -177,29 +166,20 @@ while True:
     cv2.putText(cv2_img_processed, f'FPS:{int(fps)}',
         (20, 70),
         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-    #wpm calculations
-    # TODO: Implement wpm calculations
-    wpm = 0
-    cv2.putText(cv2_img_processed, f'FPS:{int(fps)}',
-        (20, 70),
-        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-    #recognize hands from out image
-    recHands = hands.process(img)
+
+    recHands = hands.process(img) #recognize hands from out image
     multi_hand_landmarks_list = recHands.multi_hand_landmarks
     multi_handedness_list = recHands.multi_handedness
     
-    if recHands.multi_hand_landmarks:   # if there are any hands recognized
+    if recHands.multi_hand_landmarks: 
         
-        for idx in range(len(multi_hand_landmarks_list)):     # for each hand recognized
-            hand_landmarks = multi_hand_landmarks_list[idx]   # get the hand landmarks
-            handedness = multi_handedness_list[idx]           # get the handedness
-            hand_label = handedness.classification[0].label   # get the hand label (left or right)
+        for idx in range(len(multi_hand_landmarks_list)):     
+            hand_landmarks = multi_hand_landmarks_list[idx]   
+            handedness = multi_handedness_list[idx]           
+            hand_label = handedness.classification[0].label 
             
             height, width, _ = img.shape
             thumb_pos = (hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height)
-            # print("thumb y-pos: ", hand_landmarks.landmark[4].y * height, "thumb x-pos: ", hand_landmarks.landmark[4].x * width, "thumb-z-pos: ", hand_landmarks.landmark[4].z)
             
             # Calculate thumb top position
             thumb_tip_3d = (hand_landmarks.landmark[4].x * width, hand_landmarks.landmark[4].y * height, hand_landmarks.landmark[4].z)
@@ -230,23 +210,15 @@ while True:
             
             # Thumb Annotations
             # cv2.circle(img, (int(thumb_pos[0]), int(thumb_pos[1])), 5, (0, 255, 0), -1) # Draw Circles on thumb tips
-            # cv2.putText(img, hand_label, (thumb_x, thumb_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2) # print only handedness on thumb
             cv2.circle(cv2_img_processed, (int(thumb_top[0]), int(thumb_top[1])), 5, (0, 0, 255), -1) # Draw Circles on elongatetd thumb top position
                         
             
             # Calculate landmark positions for thumb and finger tips, except pinky [from:to:increment]  
             for idx, point in enumerate(hand_landmarks.landmark[8:21:4]):      
                 h, w, c = img.shape 
-                # landmark_pos = (int(point.x * w), int(point.y * h))
                 landmark_pos = (point.x * w, point.y * h)
 
-                # draw.text((int(landmark_pos[0]), int(landmark_pos[1])), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
-                # draw.text((100, 100), CHAR_DICT[hand_label][idx][0], font=finger_font, fill=(0,0,255))
                 cv2.putText(cv2_img_processed, CHAR_DICT[hand_label][idx][0], (int(landmark_pos[0]), int(landmark_pos[1])), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2)
-                
-                
-                # TODO: Add a variable threshold for distance between thumb and finger tips based on possible next characters, PERMUTATIONS?
-                # TODO: OR: Only allow characters that are child nodes of chars in input_msg
                 
                 if distance(thumb_top, landmark_pos) <= 70 and not char_written(hand_label, idx):
                     write_char(hand_label, idx)
