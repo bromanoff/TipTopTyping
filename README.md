@@ -1,6 +1,10 @@
 # TipTopTyping
 ### Thumb-to-Finger Text Input for Mobile Augmented Reality Applications
-TipTopTyping is a vision based thumb-to-finger text input system that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. With TipTopTyping, the 26 letters of the english alphabet are grouped into six letter-groups and mapped onto index- middle- and ring-finger of each hand. Space and Delete function reside on the pinky fingers. A trie datastructure forms the basis for storing and recognitizing words. A simple user interface displays the character layout, text input and an autocompletion word preview to perform a simple text copy task.
+TipTopTyping is a vision based thumb-to-finger text input system that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. 
+
+With TipTopTyping, the 26 letters of the english alphabet are grouped into six letter-groups and mapped onto index- middle- and ring-finger of each hand. Space and Delete function reside on the pinky fingers. 
+
+A trie datastructure forms the basis for storing and recognitizing words. A simple user interface displays the character layout, text input and an autocompletion word preview to perform a simple text copy task.
 
 ![screenshot of the user interface](/Figures/QWERTY_typing_example.png)
 
@@ -80,7 +84,7 @@ Walking has a negative effect on all three performance measures. A comparison be
 
 ![plots comparing performances between mobility scenarios](/Figures/results_standing-vs-walking.png)
 
-Nevertheless, participants were doing less keystrokes per character across all conditions with OPTI and were able to increase their accuracy from first to second run with the layout.
+Nevertheless, participants were doing less keystrokes per character across all conditions (higher accuracy) with OPTI and were able to increase their accuracy from first to second run with the OPTI layout.
 
 ![plots comparing performances between consecutive trials](/Figures/results_consecutive-trials.png)
 
