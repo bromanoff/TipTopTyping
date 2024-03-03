@@ -2,9 +2,9 @@
 ### Thumb-to-Finger Text Input for Mobile Augmented Reality Applications
 TipTopTyping is a vision based thumb-to-finger text input system that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. 
 
-With TipTopTyping, the 26 letters of the english alphabet are grouped into six letter-groups and mapped onto index- middle- and ring-finger of each hand. Space and Delete function reside on the pinky fingers. 
+With TipTopTyping, the 26 letters of the English alphabet are grouped into six letter-groups and mapped onto index- middle- and ring-finger of each hand. Space and Delete function reside on the pinky fingers. 
 
-A trie datastructure forms the basis for storing and recognitizing words. A simple user interface displays the character layout, text input and an autocompletion word preview to perform a simple text copy task.
+A trie data structure forms the basis for storing and recognizing words. A simple user interface displays the character layout, text input and an autocompletion word preview to perform a simple text copy task.
 
 ![screenshot of the user interface](/Figures/QWERTY_typing_example.png)
 
@@ -60,19 +60,28 @@ Participant had to copy three phrases from the [MacKenzie Phrase Set](https://ww
 
 ## Results
 ### Overall
-The section below shows overall results of the thumb-to-finger text input method 
+The section below shows overall results for speed (WPM), accuracy (KSPC) and weighted task load (TLXw) of the TipTopTyping performance evaluation 
 
+![table showing results of the evaluation](/Figures/tiptoptyping_performance_4-runs.png)
 ![table showing results of the evaluation](/Figures/results.png)
 
 #### Speed
 
 The mean entry rate over the whole experiment was 5,92 words per minute (WPM). The average entry speed increased from a mean 5,20 WPM in the first run to a mean 6,74 WPM in the fourth and final run. Two participants were able to type with rates above 10 WPM in the fourth run, just after nine sentences with TipTopTyping.
 
+With a similar amount of practice and more familiarization with the hand tracking, I  was personally able to achieve an input speed of approximately 20 WPM. 
+
+These overall performance scores can be compared to related projects with similar approaches. For example [FingerT9](https://doi.org/10.1145/3132787.3132806) achieved 5,42 WPM on the fifth day of use. [PinchType](https://doi.org/10.1145/3334480.3382888) had a mean speed of 12,54 WPM after a total 40 phrases split over four blocks. With [DigiTouch](https://doi.org/10.1145/3130978) participants typed an average 13 WPM over ten sessions, starting from 7 WPM in the first session and ending with 16 WPM in the last session.
+
 #### Accuracy
 The mean accuracy rate over the whole experiment was 1,35 KSPC. In general, participants initially approached the text input technique with caution, attempting to minimize errors even if it meant sacrificing text input speed. Over the course of the study, participants could increase their accuracy from a mean 1,41 keystrokes per character (KSPC) in the first run to 1,33 KSPC in final run.
 
 #### Task Load
 Every participant reported and weighted their task load on a scale from 1 to 20 right after each run. The individual weightings were later used to calculate a more precise personal task load score for each participant. Task load scores decreased from 12,10 in the first run to 11,45 in the last run.
+
+![table showing results of the evaluation](/Figures/weighted_diagnostic_TLX%20.png)
+
+The overall Weighted Diagnostic TLX Subscores show, that mental- and performance demand are the most demanding factors. Performance load, in the survey, was describes as the extend to which the participant rated their successful accomplishment of the task set by the experimenter or themselves. In other words, the participants required a high level of mental and perceptual activity and did not consider themselves to be particularly successful at typing. On the other hand, physical and temporal effort as well as frustration was rated relatively low. Frustration was described as the amount of discouragement, irritation, stress and annoyance. The low frustration scores are a little bit surprising regarding the fact that some participant struggled with the interaction method over the whole experiment. It appears that when an interaction is enjoyable or intriguing, it can reduce frustration in the event of failure or when difficulties arise.
 
 ### QWERTY vs. OPTI
 Participants were typing faster with QWERTY. The mean entry rate for OPTI was 5,67 words per minute (WPM), while users typed an average 6,14 WPM with QWERTY. This is approximately 8,3 % faster. However, typists using the OPTI layout made fewer keystrokes per character compared to using the QWERTY layout, meaning a higher accuracy for OPTI.
