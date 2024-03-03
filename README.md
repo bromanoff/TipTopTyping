@@ -62,8 +62,8 @@ Participant had to copy three phrases from the [MacKenzie Phrase Set](https://ww
 ### Overall
 The section below shows overall results for speed (WPM), accuracy (KSPC) and weighted task load (TLXw) of the TipTopTyping performance evaluation 
 
-![table showing results of the evaluation](/Figures/tiptoptyping_performance_4-runs.png)
-![table showing results of the evaluation](/Figures/results.png)
+![bar plot showing performance measures over four runs](/Figures/tiptoptyping_performance_4-runs.png)
+![table showing results of the evaluation](/Figures/results_table_4-runs.png)
 
 #### Speed
 
