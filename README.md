@@ -1,6 +1,6 @@
 # TipTopTyping
 ### Keyboardless mobile texting
-TipTopTyping is a computer vision based thumb-to-finger text input system based on [Google Meidapipe](https://developers.google.com/mediapipe) that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. Find a [video here](https://vimeo.com/921498733?share=copy).
+TipTopTyping is a computer vision based thumb-to-finger text input system based on [Google Mediapipe](https://developers.google.com/mediapipe) that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. Find a [video here](https://vimeo.com/921498733?share=copy).
 
 With TipTopTyping, the 26 letters of the English alphabet are grouped into six letter-groups and mapped onto index- middle- and ring-finger of each hand. Space and Delete function reside on the pinky fingers. 
 
