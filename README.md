@@ -1,12 +1,14 @@
 # TipTopTyping
-### Thumb-to-Finger Text Input for Mobile Augmented Reality Applications
-TipTopTyping is a vision based thumb-to-finger text input system that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. 
+### Keyboardless mobile texting
+TipTopTyping is a computer vision based thumb-to-finger text input system based on [Google Meidapipe](https://developers.google.com/mediapipe) that allows users to input text by performing pinch gestures between the thumb and the four fingers of each hand. Find a [video here](https://vimeo.com/921498733?share=copy).
 
 With TipTopTyping, the 26 letters of the English alphabet are grouped into six letter-groups and mapped onto index- middle- and ring-finger of each hand. Space and Delete function reside on the pinky fingers. 
 
-A trie data structure forms the basis for storing and recognizing words. A simple user interface displays the character layout, text input and an autocompletion word preview to perform a simple text copy task.
+TipTopTyping comes with OPTI, an [optimized character layout](#OPTI) designed to make frequent characters more accessible and to reduce alternation between hands. OPTI helps users to type with higher accuracy, even while walking. 
 
 ![screenshot of the user interface](/Figures/QWERTY_typing_example.png)
+
+A trie data structure forms the basis for storing and recognizing words. A simple user interface displays the character layout, text input and an autocompletion word preview to perform a simple text copy task.
 
 ### Character Layouts
 The user can choose between QWERTY and OPTI character layout. Both layouts arrange letters in groups of at least three but no more than five letters. To adress a letter in a group, the user has to pinch the corresponding finger once. A pseudo word prediction figures out the correct word after a certain amount of input letters.
@@ -89,11 +91,11 @@ Participants were typing faster with QWERTY. The mean entry rate for OPTI was 5,
 ![plots comparing performances between layouts](/Figures/results_qwerty-vs-opti.png)
 
 ### Standing vs. Walking
-Walking has a negative effect on all three performance measures. A comparison between character layouts shows, that walking has a stronger negative effect on OPTI for accuracy and task load. 
+Walking has a negative effect on all three performance measures. A comparison between character layouts shows, that walking has a stronger negative effect on OPTI for accuracy and task load. The amount of keystrokes per character (KSPC) increased from an average 1,27 KSPC while standing by approximately 12,6 % to 1,43 KSPC during walking. An increase in keystrokes means a decrease in accuracy. This is a much greater loss in performance compared to the 7,5 % decline of text input rate between both mobility scenarios.
 
 ![plots comparing performances between mobility scenarios](/Figures/results_standing-vs-walking.png)
 
-Nevertheless, participants were doing less keystrokes per character across all conditions (higher accuracy) with OPTI and were able to increase their accuracy from first to second run with the OPTI layout.
+Nevertheless, participants using OPTI layout were typing with higher accuracy for both standing and walking scenarios and were able to increase their accuracy in between sessions.
 
 ![plots comparing performances between consecutive trials](/Figures/results_consecutive-trials.png)
 
